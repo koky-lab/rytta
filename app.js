@@ -78,6 +78,12 @@ const state = {
     activeIndex: 0,
     round: 1,
   },
+  resources: {
+    actors: [
+      { id: "party", name: "Grupo", locked: true },
+    ],
+    entries: [],
+  },
   view: {
     scale: 1,
     x: 0,
@@ -93,7 +99,7 @@ const els = {
   sidebarToggleBtn: document.querySelector("#sidebarToggleBtn"),
   mapModuleBtn: document.querySelector("#mapModuleBtn"),
   initiativeModuleBtn: document.querySelector("#initiativeModuleBtn"),
-  futureToolModuleBtn: document.querySelector("#futureToolModuleBtn"),
+  resourcesModuleBtn: document.querySelector("#resourcesModuleBtn"),
   mapControls: document.querySelector("#mapControls"),
   mapUpload: document.querySelector("#mapUpload"),
   mapNameInput: document.querySelector("#mapNameInput"),
@@ -145,7 +151,7 @@ const els = {
   zoomInBtn: document.querySelector("#zoomInBtn"),
   zoomOutBtn: document.querySelector("#zoomOutBtn"),
   initiativeModule: document.querySelector("#initiativeModule"),
-  futureToolModule: document.querySelector("#futureToolModule"),
+  resourcesModule: document.querySelector("#resourcesModule"),
   initiativeForm: document.querySelector("#initiativeForm"),
   initiativeSavedPlayerSelect: document.querySelector("#initiativeSavedPlayerSelect"),
   initiativeNameInput: document.querySelector("#initiativeNameInput"),
@@ -162,6 +168,15 @@ const els = {
   initiativeRound: document.querySelector("#initiativeRound"),
   initiativeTurn: document.querySelector("#initiativeTurn"),
   initiativeList: document.querySelector("#initiativeList"),
+  resourceActorForm: document.querySelector("#resourceActorForm"),
+  resourceActorNameInput: document.querySelector("#resourceActorNameInput"),
+  resourceEntryForm: document.querySelector("#resourceEntryForm"),
+  resourceActorSelect: document.querySelector("#resourceActorSelect"),
+  resourceTypeInput: document.querySelector("#resourceTypeInput"),
+  resourceNameInput: document.querySelector("#resourceNameInput"),
+  resourceQuantityInput: document.querySelector("#resourceQuantityInput"),
+  resourceNoteInput: document.querySelector("#resourceNoteInput"),
+  resourceFeed: document.querySelector("#resourceFeed"),
 };
 
 let drag = null;
@@ -227,6 +242,7 @@ function getCampaignData() {
     measureRoute: state.measureRoute,
     sidebarCollapsed: state.sidebarCollapsed,
     initiative: state.initiative,
+    resources: state.resources,
     scale: Number(els.scaleInput.value),
     kmPerPixel: Number(els.kmPerPixelInput.value),
     speed: Number(els.speedInput.value),
@@ -259,6 +275,15 @@ function applyCampaignData(saved) {
     activeIndex: Number.isInteger(saved.initiative?.activeIndex) ? saved.initiative.activeIndex : 0,
     round: saved.initiative?.round || 1,
   };
+  state.resources = {
+    actors: Array.isArray(saved.resources?.actors) && saved.resources.actors.length
+      ? saved.resources.actors
+      : [{ id: "party", name: "Grupo", locked: true }],
+    entries: Array.isArray(saved.resources?.entries) ? saved.resources.entries : [],
+  };
+  if (!state.resources.actors.some((actor) => actor.id === "party")) {
+    state.resources.actors.unshift({ id: "party", name: "Grupo", locked: true });
+  }
   els.scaleInput.value = saved.scale || 1;
   els.kmPerPixelInput.value = saved.kmPerPixel || 0.05;
   els.speedInput.value = saved.speed || 38;
@@ -449,13 +474,13 @@ function setActiveTab(tab) {
 }
 
 function setActiveModule(module, options = {}) {
-  const allowedModules = ["map", "initiative", "futureTool"];
+  const allowedModules = ["map", "initiative", "resources"];
   state.activeModule = allowedModules.includes(module) ? module : "map";
   const isMap = state.activeModule === "map";
   els.viewport.hidden = !isMap;
   els.mapControls.hidden = !isMap;
   els.initiativeModule.hidden = state.activeModule !== "initiative";
-  els.futureToolModule.hidden = state.activeModule !== "futureTool";
+  els.resourcesModule.hidden = state.activeModule !== "resources";
   document.querySelectorAll(".module-button").forEach((button) => {
     button.classList.toggle("active", button.dataset.module === state.activeModule);
   });
@@ -688,6 +713,7 @@ function renderAll() {
   renderLocationList();
   renderSavedRoutes();
   renderInitiative();
+  renderResources();
   renderDetails();
   updateRouteSummary();
   updateMeasureSummary();
@@ -855,6 +881,99 @@ function upsertSavedPlayerFromCombatant(combatant) {
   saved.hp = combatant.hp ?? "";
   saved.ac = combatant.ac ?? "";
   combatant.savedPlayerId = saved.id;
+}
+
+function renderResources() {
+  renderResourceActorOptions();
+  els.resourceFeed.innerHTML = "";
+
+  state.resources.actors.forEach((actor) => {
+    const actorEntries = state.resources.entries.filter((entry) => entry.actorId === actor.id);
+    const column = document.createElement("section");
+    column.className = "resource-column";
+    column.dataset.actorId = actor.id;
+
+    const header = document.createElement("div");
+    header.className = "resource-column-header";
+    const title = document.createElement("h3");
+    title.textContent = actor.name;
+    header.appendChild(title);
+    if (!actor.locked) {
+      const removeActor = document.createElement("button");
+      removeActor.className = "secondary icon-button";
+      removeActor.type = "button";
+      removeActor.title = "Borrar PJ";
+      removeActor.dataset.action = "deleteResourceActor";
+      removeActor.textContent = "x";
+      header.appendChild(removeActor);
+    }
+
+    const totals = document.createElement("div");
+    totals.className = "resource-totals";
+    const computed = getResourceTotals(actorEntries);
+    if (!computed.length) {
+      totals.textContent = "Sin recursos todavia.";
+    } else {
+      computed.forEach((item) => {
+        const chip = document.createElement("span");
+        chip.textContent = `${item.name}: ${item.quantity}`;
+        totals.appendChild(chip);
+      });
+    }
+
+    const list = document.createElement("div");
+    list.className = "resource-entry-list";
+    actorEntries
+      .slice()
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      .forEach((entry) => {
+        const item = document.createElement("article");
+        item.className = "resource-entry";
+        item.dataset.entryId = entry.id;
+        item.innerHTML = `
+          <strong>${escapeHtml(entry.quantity > 0 ? `+${entry.quantity}` : String(entry.quantity))} ${escapeHtml(entry.name)}</strong>
+          <span>${entry.type === "coin" ? "Moneda" : "Recurso"}${entry.note ? ` / ${escapeHtml(entry.note)}` : ""}</span>
+        `;
+        const remove = document.createElement("button");
+        remove.className = "secondary icon-button";
+        remove.type = "button";
+        remove.title = "Borrar movimiento";
+        remove.dataset.action = "deleteResourceEntry";
+        remove.textContent = "x";
+        item.appendChild(remove);
+        list.appendChild(item);
+      });
+
+    column.append(header, totals, list);
+    els.resourceFeed.appendChild(column);
+  });
+}
+
+function renderResourceActorOptions() {
+  const current = els.resourceActorSelect.value || "party";
+  els.resourceActorSelect.innerHTML = "";
+  state.resources.actors.forEach((actor) => {
+    const option = document.createElement("option");
+    option.value = actor.id;
+    option.textContent = actor.name;
+    els.resourceActorSelect.appendChild(option);
+  });
+  els.resourceActorSelect.value = state.resources.actors.some((actor) => actor.id === current) ? current : "party";
+}
+
+function getResourceTotals(entries) {
+  const totals = new Map();
+  entries.forEach((entry) => {
+    const key = entry.name.trim().toLowerCase();
+    if (!key) return;
+    const existing = totals.get(key) || { name: entry.name, quantity: 0, type: entry.type };
+    existing.quantity += Number(entry.quantity) || 0;
+    totals.set(key, existing);
+  });
+  return Array.from(totals.values()).sort((a, b) => {
+    if (a.type !== b.type) return a.type === "coin" ? -1 : 1;
+    return a.name.localeCompare(b.name);
+  });
 }
 
 function getUsedLayersForCurrentMap() {
@@ -1746,6 +1865,67 @@ els.initiativeList.addEventListener("change", (event) => {
   }
   upsertSavedPlayerFromCombatant(combatant);
   renderInitiative();
+  saveState();
+});
+
+els.resourceActorForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const name = els.resourceActorNameInput.value.trim();
+  if (!name) return;
+  rememberUndo();
+  const actor = {
+    id: crypto.randomUUID(),
+    name,
+    locked: false,
+  };
+  state.resources.actors.push(actor);
+  els.resourceActorNameInput.value = "";
+  renderResources();
+  els.resourceActorSelect.value = actor.id;
+  saveState();
+});
+
+els.resourceEntryForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const actorId = els.resourceActorSelect.value || "party";
+  const name = els.resourceNameInput.value.trim();
+  const quantity = Number(els.resourceQuantityInput.value);
+  if (!name || !Number.isFinite(quantity) || quantity === 0) return;
+  rememberUndo();
+  state.resources.entries.push({
+    id: crypto.randomUUID(),
+    actorId,
+    type: els.resourceTypeInput.value,
+    name,
+    quantity,
+    note: els.resourceNoteInput.value.trim(),
+    createdAt: new Date().toISOString(),
+  });
+  els.resourceNameInput.value = "";
+  els.resourceQuantityInput.value = "";
+  els.resourceNoteInput.value = "";
+  renderResources();
+  saveState();
+});
+
+els.resourceFeed.addEventListener("click", (event) => {
+  const column = event.target.closest("[data-actor-id]");
+  const entry = event.target.closest("[data-entry-id]");
+  const action = event.target.closest("[data-action]")?.dataset.action;
+  if (!action) return;
+  rememberUndo();
+
+  if (action === "deleteResourceEntry" && entry) {
+    state.resources.entries = state.resources.entries.filter((candidate) => candidate.id !== entry.dataset.entryId);
+  }
+
+  if (action === "deleteResourceActor" && column) {
+    const actorId = column.dataset.actorId;
+    state.resources.actors = state.resources.actors.filter((actor) => actor.id !== actorId || actor.locked);
+    state.resources.entries = state.resources.entries.filter((candidate) => candidate.actorId !== actorId);
+  }
+
+  renderResources();
   saveState();
 });
 

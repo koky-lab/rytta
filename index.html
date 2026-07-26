@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Rytta</title>
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles.css?v=20260726-recursos" />
   </head>
   <body>
     <div id="appShell" class="app-shell">
@@ -146,7 +146,7 @@
             <div class="module-actions" aria-label="Modulos de partida">
               <button id="mapModuleBtn" class="module-button active" data-module="map" type="button">Mapa</button>
               <button id="initiativeModuleBtn" class="module-button" data-module="initiative" type="button">Iniciativa</button>
-              <button id="futureToolModuleBtn" class="module-button" data-module="futureTool" type="button">Nueva herramienta</button>
+              <button id="resourcesModuleBtn" class="module-button" data-module="resources" type="button">Recursos</button>
             </div>
           </div>
         </header>
@@ -242,12 +242,46 @@
           <div id="initiativeList" class="initiative-list"></div>
         </section>
 
-        <section id="futureToolModule" class="app-module module-placeholder" hidden>
-          <div>
-            <span class="badge small">Proxima herramienta</span>
-            <h2>Nueva herramienta</h2>
-            <p>Este espacio queda preparado para el siguiente modulo de la campana.</p>
+        <section id="resourcesModule" class="app-module resources-module" hidden>
+          <div class="module-header">
+            <div>
+              <span class="badge small">Tesoro y recursos</span>
+              <h2>Recursos</h2>
+            </div>
+            <form id="resourceActorForm" class="resource-actor-form">
+              <input id="resourceActorNameInput" type="text" placeholder="Nombre PJ" />
+              <button type="submit">Anadir PJ</button>
+            </form>
           </div>
+
+          <form id="resourceEntryForm" class="resource-entry-form">
+            <label>
+              <span>Destino</span>
+              <select id="resourceActorSelect"></select>
+            </label>
+            <label>
+              <span>Tipo</span>
+              <select id="resourceTypeInput">
+                <option value="coin">Moneda</option>
+                <option value="resource">Recurso</option>
+              </select>
+            </label>
+            <label>
+              <span>Nombre</span>
+              <input id="resourceNameInput" type="text" placeholder="Oro, raciones, flechas..." />
+            </label>
+            <label>
+              <span>Cantidad</span>
+              <input id="resourceQuantityInput" type="number" step="1" placeholder="10" />
+            </label>
+            <label>
+              <span>Nota</span>
+              <input id="resourceNoteInput" type="text" placeholder="Botin, gasto, compra..." />
+            </label>
+            <button type="submit">Anadir</button>
+          </form>
+
+          <div id="resourceFeed" class="resource-feed"></div>
         </section>
 
         <div id="mapViewport" class="map-viewport">
@@ -347,6 +381,6 @@
       </div>
     </template>
 
-    <script src="app.js"></script>
+    <script src="app.js?v=20260726-recursos"></script>
   </body>
 </html>

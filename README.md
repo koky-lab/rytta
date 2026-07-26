@@ -12,6 +12,7 @@ App web local para dirigir una campana de D&D con mapas grandes, secretos, rutas
 - Terrenos con dificultad: camino, llanura, bosque, montana, pantano y mar.
 - Modulo de iniciativa con ronda, turno, PG, CA, motes para enemigos y formulas de vida.
 - Personajes jugadores guardados para reutilizarlos en combates futuros.
+- Modulo de recursos con columnas por grupo/PJ, monedas, recursos y movimientos.
 - Guardado automatico en IndexedDB del navegador.
 - Exportacion e importacion de campana en JSON.
 
