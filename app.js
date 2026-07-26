@@ -1159,9 +1159,9 @@ function openResourceDialog(actorId, type) {
   const isCoin = state.resourceDialog.type === "coin";
   const isWater = state.resourceDialog.type === "water";
   els.resourceDialogBadge.textContent = actor.name;
-  els.resourceDialogTitle.textContent = isCoin ? "Editar oro" : isWater ? "Editar agua" : "Anadir recurso";
-  els.resourceDialogNameLabel.hidden = isCoin || isWater;
-  els.resourceDialogNameInput.value = isCoin ? "Oro" : isWater ? "Agua" : "";
+  els.resourceDialogTitle.textContent = isCoin ? "Editar oro" : isWater ? "Editar agua" : "Editar raciones";
+  els.resourceDialogNameLabel.hidden = true;
+  els.resourceDialogNameInput.value = isCoin ? "Oro" : isWater ? "Agua" : "Raciones";
   els.resourceDialogQuantityInput.value = "";
   els.resourceDialogNoteInput.value = "";
   els.resourceDialogQuantityInput.placeholder = isCoin || isWater ? "10 o -1" : "10";
@@ -1169,15 +1169,10 @@ function openResourceDialog(actorId, type) {
     ? "Usa numeros positivos para sumar oro y negativos para restar."
     : isWater
       ? "Usa numeros positivos para anadir agua y negativos para consumirla."
-      : "";
-  els.resourceDialogNameInput.placeholder = "Raciones, flechas, cuerda...";
+      : "Usa numeros positivos para anadir raciones y negativos para consumirlas.";
   els.resourceDialog.hidden = false;
   requestAnimationFrame(() => {
-    if (isCoin || isWater) {
-      els.resourceDialogQuantityInput.focus();
-    } else {
-      els.resourceDialogNameInput.focus();
-    }
+    els.resourceDialogQuantityInput.focus();
   });
 }
 
@@ -2249,7 +2244,7 @@ els.resourceDialogForm.addEventListener("submit", (event) => {
   event.preventDefault();
   const actorId = state.resourceDialog.actorId;
   const type = state.resourceDialog.type;
-  const name = type === "coin" ? "Oro" : type === "water" ? "Agua" : els.resourceDialogNameInput.value.trim();
+  const name = type === "coin" ? "Oro" : type === "water" ? "Agua" : "Raciones";
   const quantity = Number(els.resourceDialogQuantityInput.value);
   if (!actorId || !name || !Number.isFinite(quantity) || quantity === 0) return;
   rememberUndo();
