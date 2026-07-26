@@ -79,9 +79,7 @@ const state = {
     round: 1,
   },
   resources: {
-    actors: [
-      { id: "party", name: "Grupo", locked: true },
-    ],
+    actors: [],
     entries: [],
   },
   view: {
@@ -276,14 +274,13 @@ function applyCampaignData(saved) {
     round: saved.initiative?.round || 1,
   };
   state.resources = {
-    actors: Array.isArray(saved.resources?.actors) && saved.resources.actors.length
-      ? saved.resources.actors
-      : [{ id: "party", name: "Grupo", locked: true }],
-    entries: Array.isArray(saved.resources?.entries) ? saved.resources.entries : [],
+    actors: Array.isArray(saved.resources?.actors)
+      ? saved.resources.actors.filter((actor) => actor.id !== "party")
+      : [],
+    entries: Array.isArray(saved.resources?.entries)
+      ? saved.resources.entries.filter((entry) => entry.actorId !== "party")
+      : [],
   };
-  if (!state.resources.actors.some((actor) => actor.id === "party")) {
-    state.resources.actors.unshift({ id: "party", name: "Grupo", locked: true });
-  }
   els.scaleInput.value = saved.scale || 1;
   els.kmPerPixelInput.value = saved.kmPerPixel || 0.05;
   els.speedInput.value = saved.speed || 38;
@@ -887,39 +884,51 @@ function renderResources() {
   renderResourceActorOptions();
   els.resourceFeed.innerHTML = "";
 
+  if (!state.resources.actors.length) {
+    const empty = document.createElement("div");
+    empty.className = "resource-empty";
+    empty.innerHTML = `
+      <strong>Crea el primer PJ</strong>
+      <span>Anade un personaje arriba para abrir su inventario de monedas y recursos.</span>
+    `;
+    els.resourceFeed.appendChild(empty);
+    return;
+  }
+
   state.resources.actors.forEach((actor) => {
     const actorEntries = state.resources.entries.filter((entry) => entry.actorId === actor.id);
+    const coinTotals = getResourceTotals(actorEntries.filter((entry) => entry.type === "coin"));
+    const inventoryTotals = getResourceTotals(actorEntries.filter((entry) => entry.type !== "coin"));
     const column = document.createElement("section");
     column.className = "resource-column";
     column.dataset.actorId = actor.id;
+    column.style.setProperty("--actor-accent", actor.color || colorFromString(actor.name));
 
     const header = document.createElement("div");
     header.className = "resource-column-header";
+    const avatar = document.createElement("span");
+    avatar.className = "resource-avatar";
+    avatar.textContent = actor.name.trim().charAt(0).toUpperCase() || "?";
     const title = document.createElement("h3");
     title.textContent = actor.name;
-    header.appendChild(title);
-    if (!actor.locked) {
-      const removeActor = document.createElement("button");
-      removeActor.className = "secondary icon-button";
-      removeActor.type = "button";
-      removeActor.title = "Borrar PJ";
-      removeActor.dataset.action = "deleteResourceActor";
-      removeActor.textContent = "x";
-      header.appendChild(removeActor);
-    }
+    const removeActor = document.createElement("button");
+    removeActor.className = "secondary icon-button";
+    removeActor.type = "button";
+    removeActor.title = "Borrar PJ";
+    removeActor.dataset.action = "deleteResourceActor";
+    removeActor.textContent = "x";
+    header.append(avatar, title, removeActor);
 
-    const totals = document.createElement("div");
-    totals.className = "resource-totals";
-    const computed = getResourceTotals(actorEntries);
-    if (!computed.length) {
-      totals.textContent = "Sin recursos todavia.";
-    } else {
-      computed.forEach((item) => {
-        const chip = document.createElement("span");
-        chip.textContent = `${item.name}: ${item.quantity}`;
-        totals.appendChild(chip);
-      });
-    }
+    const label = document.createElement("div");
+    label.className = "resource-inventory-label";
+    label.textContent = "Inventario";
+
+    const panels = document.createElement("div");
+    panels.className = "resource-panels";
+    panels.append(
+      createResourcePanel("Recursos", inventoryTotals, "Sin recursos"),
+      createResourcePanel("Monedas", coinTotals, "Sin monedas"),
+    );
 
     const list = document.createElement("div");
     list.className = "resource-entry-list";
@@ -944,21 +953,30 @@ function renderResources() {
         list.appendChild(item);
       });
 
-    column.append(header, totals, list);
+    column.append(header, label, panels, list);
     els.resourceFeed.appendChild(column);
   });
 }
 
 function renderResourceActorOptions() {
-  const current = els.resourceActorSelect.value || "party";
+  const current = els.resourceActorSelect.value || "";
   els.resourceActorSelect.innerHTML = "";
+  if (!state.resources.actors.length) {
+    const option = document.createElement("option");
+    option.value = "";
+    option.textContent = "Anade un PJ primero";
+    els.resourceActorSelect.appendChild(option);
+    els.resourceActorSelect.disabled = true;
+    return;
+  }
+  els.resourceActorSelect.disabled = false;
   state.resources.actors.forEach((actor) => {
     const option = document.createElement("option");
     option.value = actor.id;
     option.textContent = actor.name;
     els.resourceActorSelect.appendChild(option);
   });
-  els.resourceActorSelect.value = state.resources.actors.some((actor) => actor.id === current) ? current : "party";
+  els.resourceActorSelect.value = state.resources.actors.some((actor) => actor.id === current) ? current : state.resources.actors[0].id;
 }
 
 function getResourceTotals(entries) {
@@ -974,6 +992,36 @@ function getResourceTotals(entries) {
     if (a.type !== b.type) return a.type === "coin" ? -1 : 1;
     return a.name.localeCompare(b.name);
   });
+}
+
+function createResourcePanel(title, items, emptyText) {
+  const panel = document.createElement("section");
+  panel.className = "resource-panel";
+  const heading = document.createElement("h4");
+  heading.textContent = title;
+  const body = document.createElement("div");
+  body.className = "resource-panel-body";
+  if (!items.length) {
+    body.textContent = emptyText;
+  } else {
+    items.forEach((item) => {
+      const row = document.createElement("span");
+      row.textContent = `${item.name}: ${item.quantity}`;
+      body.appendChild(row);
+    });
+  }
+  panel.append(heading, body);
+  return panel;
+}
+
+function colorFromString(value) {
+  const palette = ["#78b7a6", "#d8aa47", "#c75f52", "#7d97d2", "#b982cf", "#8fbd67"];
+  let hash = 0;
+  for (let index = 0; index < value.length; index += 1) {
+    hash = ((hash << 5) - hash) + value.charCodeAt(index);
+    hash |= 0;
+  }
+  return palette[Math.abs(hash) % palette.length];
 }
 
 function getUsedLayersForCurrentMap() {
@@ -1877,6 +1925,7 @@ els.resourceActorForm.addEventListener("submit", (event) => {
     id: crypto.randomUUID(),
     name,
     locked: false,
+    color: colorFromString(name),
   };
   state.resources.actors.push(actor);
   els.resourceActorNameInput.value = "";
@@ -1887,10 +1936,10 @@ els.resourceActorForm.addEventListener("submit", (event) => {
 
 els.resourceEntryForm.addEventListener("submit", (event) => {
   event.preventDefault();
-  const actorId = els.resourceActorSelect.value || "party";
+  const actorId = els.resourceActorSelect.value;
   const name = els.resourceNameInput.value.trim();
   const quantity = Number(els.resourceQuantityInput.value);
-  if (!name || !Number.isFinite(quantity) || quantity === 0) return;
+  if (!actorId || !name || !Number.isFinite(quantity) || quantity === 0) return;
   rememberUndo();
   state.resources.entries.push({
     id: crypto.randomUUID(),
@@ -1921,7 +1970,7 @@ els.resourceFeed.addEventListener("click", (event) => {
 
   if (action === "deleteResourceActor" && column) {
     const actorId = column.dataset.actorId;
-    state.resources.actors = state.resources.actors.filter((actor) => actor.id !== actorId || actor.locked);
+    state.resources.actors = state.resources.actors.filter((actor) => actor.id !== actorId);
     state.resources.entries = state.resources.entries.filter((candidate) => candidate.actorId !== actorId);
   }
 
