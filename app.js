@@ -112,6 +112,7 @@ const state = {
     actorId: "",
     type: "resource",
   },
+  portraitActorId: "",
   view: {
     scale: 1,
     x: 0,
@@ -200,6 +201,7 @@ const els = {
   resourceActorForm: document.querySelector("#resourceActorForm"),
   resourceActorNameInput: document.querySelector("#resourceActorNameInput"),
   resourceFeed: document.querySelector("#resourceFeed"),
+  portraitUpload: document.querySelector("#portraitUpload"),
   resourceDialog: document.querySelector("#resourceDialog"),
   resourceDialogForm: document.querySelector("#resourceDialogForm"),
   resourceDialogBadge: document.querySelector("#resourceDialogBadge"),
@@ -927,6 +929,7 @@ function normalizeResourceActor(actor) {
     exhaustion: clamp(Number(actor.exhaustion) || 0, 0, 6),
     inventoryOpen: actor.inventoryOpen === true,
     equipment,
+    portrait: typeof actor.portrait === "string" ? actor.portrait : "",
   };
 }
 
@@ -1080,17 +1083,32 @@ function createEquipmentFeed(actor) {
   title.textContent = "Equipo";
   const figure = document.createElement("div");
   figure.className = "equipment-figure";
+  figure.classList.toggle("has-portrait", Boolean(actor.portrait));
   figure.setAttribute("aria-hidden", "true");
-  figure.innerHTML = `
-    <span class="figure-head"></span>
-    <span class="figure-neck"></span>
-    <span class="figure-torso"></span>
-    <span class="figure-arm left"></span>
-    <span class="figure-arm right"></span>
-    <span class="figure-leg left"></span>
-    <span class="figure-leg right"></span>
+  if (actor.portrait) {
+    const image = document.createElement("img");
+    image.className = "equipment-portrait";
+    image.src = actor.portrait;
+    image.alt = "";
+    figure.appendChild(image);
+  } else {
+    figure.innerHTML = `
+      <span class="figure-head"></span>
+      <span class="figure-neck"></span>
+      <span class="figure-torso"></span>
+      <span class="figure-arm left"></span>
+      <span class="figure-arm right"></span>
+      <span class="figure-leg left"></span>
+      <span class="figure-leg right"></span>
+    `;
+  }
+  const actions = document.createElement("div");
+  actions.className = "equipment-portrait-actions";
+  actions.innerHTML = `
+    <button data-action="uploadPortrait" type="button">Cargar imagen</button>
+    <button class="secondary" data-action="removePortrait" type="button"${actor.portrait ? "" : " disabled"}>Quitar</button>
   `;
-  feed.append(title, figure);
+  feed.append(title, figure, actions);
   EQUIPMENT_SLOTS.forEach((slot) => {
     const item = document.createElement("label");
     item.className = `equipment-slot slot-${slot.id}`;
@@ -2094,6 +2112,7 @@ els.resourceActorForm.addEventListener("submit", (event) => {
     exhaustion: 0,
     inventoryOpen: false,
     equipment: Object.fromEntries(EQUIPMENT_SLOTS.map((slot) => [slot.id, ""])),
+    portrait: "",
   };
   state.resources.actors.push(actor);
   els.resourceActorNameInput.value = "";
@@ -2111,6 +2130,11 @@ els.resourceFeed.addEventListener("click", (event) => {
     openResourceDialog(button.dataset.actorId, button.dataset.resourceType);
     return;
   }
+  if (action === "uploadPortrait" && column) {
+    state.portraitActorId = column.dataset.actorId;
+    els.portraitUpload.click();
+    return;
+  }
   rememberUndo();
 
   if (action === "deleteResourceEntry" && entry) {
@@ -2126,6 +2150,11 @@ els.resourceFeed.addEventListener("click", (event) => {
   if (action === "toggleInventory" && column) {
     const actor = state.resources.actors.find((candidate) => candidate.id === column.dataset.actorId);
     if (actor) actor.inventoryOpen = !actor.inventoryOpen;
+  }
+
+  if (action === "removePortrait" && column) {
+    const actor = state.resources.actors.find((candidate) => candidate.id === column.dataset.actorId);
+    if (actor) actor.portrait = "";
   }
 
   if (action === "setExhaustion" && column) {
@@ -2168,6 +2197,23 @@ els.resourceFeed.addEventListener("input", (event) => {
   }
   actor.equipment[slot] = nextValue;
   saveState();
+});
+
+els.portraitUpload.addEventListener("change", async () => {
+  const file = els.portraitUpload.files[0];
+  const actor = state.resources.actors.find((candidate) => candidate.id === state.portraitActorId);
+  if (!file || !actor) {
+    els.portraitUpload.value = "";
+    state.portraitActorId = "";
+    return;
+  }
+  rememberUndo();
+  actor.portrait = await fileToDataUrl(file);
+  actor.inventoryOpen = true;
+  renderResources();
+  saveState();
+  els.portraitUpload.value = "";
+  state.portraitActorId = "";
 });
 
 els.consumeDayBtn.addEventListener("click", () => {

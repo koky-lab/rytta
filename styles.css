@@ -774,6 +774,7 @@ textarea {
     "cloak figure armor"
     "bracers figure hands"
     "feet figure focus"
+    "actions actions actions"
     "ring1 mainHand ring2"
     "offHand offHand offHand";
   gap: 8px 10px;
@@ -818,9 +819,43 @@ textarea {
 .equipment-figure {
   grid-area: figure;
   position: relative;
+  display: grid;
+  place-items: center;
   align-self: stretch;
   min-height: 292px;
   opacity: 0.82;
+}
+
+.equipment-figure.has-portrait {
+  opacity: 1;
+}
+
+.equipment-portrait {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: min(132px, 100%);
+  max-height: 292px;
+  object-fit: contain;
+  filter: drop-shadow(0 22px 22px rgba(0, 0, 0, 0.56)) drop-shadow(0 0 10px rgba(216, 170, 71, 0.12));
+  transform: perspective(520px) rotateY(-4deg);
+}
+
+.equipment-figure.has-portrait::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 10px;
+  width: 92px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.42);
+  filter: blur(5px);
+  transform: translateX(-50%);
+}
+
+.equipment-figure.has-portrait::after {
+  display: none;
 }
 
 .equipment-figure span {
@@ -985,6 +1020,19 @@ textarea {
 .equipment-slot input:focus {
   border-bottom-color: #8e6d2d;
   outline: 2px solid rgba(216, 170, 71, 0.28);
+}
+
+.equipment-portrait-actions {
+  grid-area: actions;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.equipment-portrait-actions button {
+  min-height: 30px;
+  padding: 5px 10px;
 }
 
 .slot-head { grid-area: head; }
