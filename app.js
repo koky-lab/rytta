@@ -8,7 +8,7 @@ const UNDO_LIMIT = 30;
 const DEFAULT_MARKER_ICON = "assets/pin.png";
 const DAILY_RESOURCE_COSTS = [
   { type: "water", name: "Agua", quantity: -1 },
-  { type: "resource", name: "Raciones", quantity: -1 },
+  { type: "resource", name: "Raciones", quantity: -1, missingLabel: "comida", exhaustionOnMissing: true },
 ];
 const EXHAUSTION_HELP = [
   "1: Desventaja en pruebas de caracteristica",
@@ -176,6 +176,7 @@ const els = {
   measureSummary: document.querySelector("#measureSummary"),
   toolStatus: document.querySelector("#toolStatus"),
   saveStatus: document.querySelector("#saveStatus"),
+  notificationStack: document.querySelector("#notificationStack"),
   backToMainBtn: document.querySelector("#backToMainBtn"),
   zoomInBtn: document.querySelector("#zoomInBtn"),
   zoomOutBtn: document.querySelector("#zoomOutBtn"),
@@ -1041,6 +1042,26 @@ function getResourceTotals(entries) {
       if (a.type !== b.type) return a.type === "coin" ? -1 : 1;
       return a.name.localeCompare(b.name);
     });
+}
+
+function getActorResourceQuantity(actorId, type, name) {
+  const key = name.trim().toLowerCase();
+  return state.resources.entries
+    .filter((entry) => entry.actorId === actorId && entry.type === type && entry.name.trim().toLowerCase() === key)
+    .reduce((total, entry) => total + (Number(entry.quantity) || 0), 0);
+}
+
+function showNotification(message, variant = "warning") {
+  updateSaveStatus(message);
+  if (!els.notificationStack) return;
+  const notice = document.createElement("div");
+  notice.className = `notification ${variant}`;
+  notice.textContent = message;
+  els.notificationStack.appendChild(notice);
+  window.setTimeout(() => {
+    notice.classList.add("leaving");
+    window.setTimeout(() => notice.remove(), 220);
+  }, 5200);
 }
 
 function createExhaustionMeter(actor) {
@@ -2233,6 +2254,11 @@ els.consumeDayBtn.addEventListener("click", () => {
   const createdAt = new Date().toISOString();
   state.resources.actors.forEach((actor) => {
     DAILY_RESOURCE_COSTS.forEach((cost) => {
+      const available = getActorResourceQuantity(actor.id, cost.type, cost.name);
+      if (cost.exhaustionOnMissing && available <= 0) {
+        actor.exhaustion = clamp((Number(actor.exhaustion) || 0) + 1, 0, 6);
+        showNotification(`${actor.name} no tiene ${cost.missingLabel}, sufre +1 agotamiento`);
+      }
       state.resources.entries.push({
         id: crypto.randomUUID(),
         actorId: actor.id,

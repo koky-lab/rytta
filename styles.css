@@ -517,6 +517,47 @@ textarea {
   font-size: 13px;
 }
 
+.notification-stack {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 80;
+  display: grid;
+  gap: 8px;
+  width: min(360px, calc(100vw - 36px));
+  pointer-events: none;
+}
+
+.notification {
+  padding: 10px 12px;
+  border: 1px solid rgba(216, 170, 71, 0.58);
+  border-radius: 8px;
+  background: rgba(23, 24, 20, 0.94);
+  color: var(--ink);
+  box-shadow: var(--shadow);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.35;
+  animation: notice-in 160ms ease-out;
+}
+
+.notification.leaving {
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+@keyframes notice-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .module-actions {
   display: flex;
   gap: 8px;
