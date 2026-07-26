@@ -211,7 +211,6 @@ function getCampaignData() {
   return {
     savedAt: new Date().toISOString(),
     role: state.role,
-    activeModule: state.activeModule,
     currentMapId: state.currentMapId,
     mapHistory: state.mapHistory,
     map: state.map,
@@ -237,7 +236,7 @@ function getCampaignData() {
 function applyCampaignData(saved) {
   if (!saved) return;
   state.role = saved.role || "dm";
-  state.activeModule = saved.activeModule || "map";
+  state.activeModule = "map";
   state.currentMapId = saved.currentMapId || "main";
   state.mapHistory = Array.isArray(saved.mapHistory) ? saved.mapHistory : [];
   state.map = saved.map || state.map;
@@ -440,6 +439,7 @@ function updatePanCursor() {
 }
 
 function setActiveTab(tab) {
+  setActiveModule("map", { skipSave: true });
   document.querySelectorAll(".tab-button").forEach((button) => {
     button.classList.toggle("active", button.dataset.tab === tab);
   });
@@ -464,6 +464,7 @@ function setActiveModule(module, options = {}) {
 }
 
 function setToolMode(mode) {
+  setActiveModule("map", { skipSave: true });
   if (mode === "pan") mode = "explore";
   rememberUndo();
   state.toolMode = mode;
@@ -585,6 +586,7 @@ function setRole(role, options = {}) {
 }
 
 function applyMapImage(options = {}) {
+  setActiveModule("map", { skipSave: true });
   const activeMap = getActiveMap();
   const isSubmap = state.currentMapId !== "main";
   els.mapTitle.textContent = activeMap.name || "Mapa principal";
