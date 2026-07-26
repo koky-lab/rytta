@@ -1,5 +1,5 @@
 param(
-  [string]$RepoName = "atlas-campana-dnd",
+  [string]$RepoName = "rytta",
   [switch]$Private
 )
 

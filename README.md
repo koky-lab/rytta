@@ -1,4 +1,4 @@
-# Atlas de Campana D&D
+# Rytta
 
 App web local para dirigir una campana de D&D con mapas grandes, secretos, rutas e iniciativa.
 
@@ -58,7 +58,7 @@ El repositorio local ya esta preparado en Git. Para crear el repositorio remoto 
 .\publish-to-github.ps1
 ```
 
-El script usa GitHub CLI. Si no has iniciado sesion, abrira el login de GitHub en el navegador. Por defecto crea un repositorio publico llamado `atlas-campana-dnd`.
+El script usa GitHub CLI. Si no has iniciado sesion, abrira el login de GitHub en el navegador. Por defecto crea un repositorio publico llamado `rytta`.
 
 Para cambiar el nombre:
 
