@@ -1081,6 +1081,15 @@ function createEquipmentFeed(actor) {
   const figure = document.createElement("div");
   figure.className = "equipment-figure";
   figure.setAttribute("aria-hidden", "true");
+  figure.innerHTML = `
+    <span class="figure-head"></span>
+    <span class="figure-neck"></span>
+    <span class="figure-torso"></span>
+    <span class="figure-arm left"></span>
+    <span class="figure-arm right"></span>
+    <span class="figure-leg left"></span>
+    <span class="figure-leg right"></span>
+  `;
   feed.append(title, figure);
   EQUIPMENT_SLOTS.forEach((slot) => {
     const item = document.createElement("label");
