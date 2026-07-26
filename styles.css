@@ -867,25 +867,24 @@ textarea {
 }
 
 .equipment-add-photo {
+  position: static;
   z-index: 2;
   display: grid;
   place-items: center;
-  left: 50%;
-  top: 42%;
-  width: 48px;
-  height: 48px;
-  border: 2px solid rgba(216, 170, 71, 0.9);
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(216, 170, 71, 0.9);
   border-radius: 50%;
-  background: rgba(10, 11, 8, 0.78);
-  color: var(--accent);
-  font-size: 34px;
+  background: var(--accent);
+  color: #201a0d;
+  font-size: 22px;
   font-weight: 900;
   line-height: 1;
-  transform: translate(-50%, -50%);
-  box-shadow: 0 0 24px rgba(216, 170, 71, 0.22);
+  transform: none;
+  box-shadow: 0 0 18px rgba(216, 170, 71, 0.25);
 }
 
-.equipment-figure span {
+.equipment-figure span:not(.equipment-add-photo) {
   position: absolute;
   display: block;
   background:

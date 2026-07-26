@@ -1096,15 +1096,6 @@ function createEquipmentFeed(actor) {
     image.alt = "";
     figure.appendChild(image);
   } else {
-    figure.innerHTML = `
-      <span class="figure-head"></span>
-      <span class="figure-neck"></span>
-      <span class="figure-torso"></span>
-      <span class="figure-arm left"></span>
-      <span class="figure-arm right"></span>
-      <span class="figure-leg left"></span>
-      <span class="figure-leg right"></span>
-    `;
     const add = document.createElement("span");
     add.className = "equipment-add-photo";
     add.textContent = "+";
