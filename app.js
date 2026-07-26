@@ -1084,7 +1084,11 @@ function createEquipmentFeed(actor) {
   const figure = document.createElement("div");
   figure.className = "equipment-figure";
   figure.classList.toggle("has-portrait", Boolean(actor.portrait));
-  figure.setAttribute("aria-hidden", "true");
+  figure.dataset.action = "uploadPortrait";
+  figure.title = actor.portrait ? "Cambiar imagen" : "Cargar imagen";
+  figure.setAttribute("role", "button");
+  figure.setAttribute("tabindex", "0");
+  figure.setAttribute("aria-label", actor.portrait ? `Cambiar imagen de ${actor.name}` : `Cargar imagen de ${actor.name}`);
   if (actor.portrait) {
     const image = document.createElement("img");
     image.className = "equipment-portrait";
@@ -1101,11 +1105,14 @@ function createEquipmentFeed(actor) {
       <span class="figure-leg left"></span>
       <span class="figure-leg right"></span>
     `;
+    const add = document.createElement("span");
+    add.className = "equipment-add-photo";
+    add.textContent = "+";
+    figure.appendChild(add);
   }
   const actions = document.createElement("div");
   actions.className = "equipment-portrait-actions";
   actions.innerHTML = `
-    <button data-action="uploadPortrait" type="button">Cargar imagen</button>
     <button class="secondary" data-action="removePortrait" type="button"${actor.portrait ? "" : " disabled"}>Quitar</button>
   `;
   feed.append(title, figure, actions);
@@ -2169,9 +2176,17 @@ els.resourceFeed.addEventListener("click", (event) => {
 
 els.resourceFeed.addEventListener("keydown", (event) => {
   const input = event.target.closest("[data-equipment-slot]");
-  if (!input || event.key !== "Enter") return;
+  if (input && event.key === "Enter") {
+    event.preventDefault();
+    input.blur();
+    return;
+  }
+  const portraitTrigger = event.target.closest('[data-action="uploadPortrait"]');
+  const column = event.target.closest("[data-actor-id]");
+  if (!portraitTrigger || !column || !["Enter", " "].includes(event.key)) return;
   event.preventDefault();
-  input.blur();
+  state.portraitActorId = column.dataset.actorId;
+  els.portraitUpload.click();
 });
 
 els.resourceFeed.addEventListener("focusin", (event) => {

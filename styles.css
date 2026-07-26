@@ -635,7 +635,7 @@ textarea {
 }
 
 .resource-column.equipment-open {
-  width: min(560px, calc(100vw - 42px));
+  width: min(620px, calc(100vw - 42px));
 }
 
 .resource-column-header {
@@ -767,17 +767,17 @@ textarea {
 .equipment-feed {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 140px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) 176px minmax(0, 1fr);
   grid-template-areas:
     "title title title"
     "head figure neck"
     "cloak figure armor"
     "bracers figure hands"
     "feet figure focus"
-    "actions actions actions"
     "ring1 mainHand ring2"
+    "actions actions actions"
     "offHand offHand offHand";
-  gap: 8px 10px;
+  gap: 8px 8px;
   align-self: start;
   padding: 10px;
   border: 1px solid var(--line);
@@ -822,8 +822,16 @@ textarea {
   display: grid;
   place-items: center;
   align-self: stretch;
+  cursor: pointer;
   min-height: 292px;
+  border-radius: 10px;
   opacity: 0.82;
+}
+
+.equipment-figure:hover,
+.equipment-figure:focus {
+  outline: 1px solid rgba(216, 170, 71, 0.45);
+  outline-offset: 3px;
 }
 
 .equipment-figure.has-portrait {
@@ -834,8 +842,8 @@ textarea {
   position: relative;
   z-index: 1;
   display: block;
-  width: min(132px, 100%);
-  max-height: 292px;
+  width: min(168px, 100%);
+  max-height: 320px;
   object-fit: contain;
   filter: drop-shadow(0 22px 22px rgba(0, 0, 0, 0.56)) drop-shadow(0 0 10px rgba(216, 170, 71, 0.12));
   transform: perspective(520px) rotateY(-4deg);
@@ -846,7 +854,7 @@ textarea {
   position: absolute;
   left: 50%;
   bottom: 10px;
-  width: 92px;
+  width: 118px;
   height: 18px;
   border-radius: 50%;
   background: rgba(0, 0, 0, 0.42);
@@ -856,6 +864,25 @@ textarea {
 
 .equipment-figure.has-portrait::after {
   display: none;
+}
+
+.equipment-add-photo {
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  left: 50%;
+  top: 42%;
+  width: 48px;
+  height: 48px;
+  border: 2px solid rgba(216, 170, 71, 0.9);
+  border-radius: 50%;
+  background: rgba(10, 11, 8, 0.78);
+  color: var(--accent);
+  font-size: 34px;
+  font-weight: 900;
+  line-height: 1;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 24px rgba(216, 170, 71, 0.22);
 }
 
 .equipment-figure span {
@@ -973,17 +1000,25 @@ textarea {
   content: "";
   position: absolute;
   top: 18px;
-  width: 16px;
+  width: 22px;
   height: 1px;
   background: rgba(238, 238, 234, 0.35);
 }
 
-.equipment-slot:nth-of-type(odd)::before {
-  right: -17px;
+.slot-head::before,
+.slot-cloak::before,
+.slot-bracers::before,
+.slot-feet::before,
+.slot-ring1::before {
+  right: -23px;
 }
 
-.equipment-slot:nth-of-type(even)::before {
-  left: -17px;
+.slot-neck::before,
+.slot-armor::before,
+.slot-hands::before,
+.slot-focus::before,
+.slot-ring2::before {
+  left: -23px;
 }
 
 .equipment-slot span {
@@ -1031,7 +1066,7 @@ textarea {
 }
 
 .equipment-portrait-actions button {
-  min-height: 30px;
+  min-height: 28px;
   padding: 5px 10px;
 }
 
