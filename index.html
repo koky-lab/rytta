@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Atlas de Campana D&D</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="appShell" class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">D20</div>
+          <div>
+            <h1>Atlas de Campana</h1>
+            <p>Mapa, secretos y rutas para tu mesa.</p>
+          </div>
+        </div>
+
+        <section class="panel tab-panel active" data-tab-panel="map">
+          <h2>Mapa</h2>
+          <label class="file-button">
+            <input id="mapUpload" type="file" accept="image/*" />
+            <span id="mapUploadLabel">Cargar mapa principal</span>
+          </label>
+          <label class="input-row">
+            <span>Nombre</span>
+            <input id="mapNameInput" type="text" placeholder="Costa de Eldamar" />
+          </label>
+          <button id="saveMapNameBtn" class="secondary" type="button">Guardar nombre</button>
+          <div class="map-actions">
+            <button id="goMainMapBtn" class="secondary" type="button">Mapa principal</button>
+            <button id="resetViewBtn" class="secondary" type="button">Centrar vista</button>
+          </div>
+        </section>
+
+        <section class="panel tab-panel" data-tab-panel="points">
+          <h2>Localizaciones</h2>
+          <label class="input-row">
+            <span>Buscar</span>
+            <input id="locationSearch" type="text" placeholder="Ciudad, templo, faccion..." />
+          </label>
+          <div id="locationList" class="item-list"></div>
+        </section>
+
+        <section class="panel tab-panel" data-tab-panel="points">
+          <h2>Capas</h2>
+          <div id="layerControls" class="layer-list"></div>
+        </section>
+
+        <section class="panel tab-panel" data-tab-panel="campaign">
+          <h2>Setups</h2>
+          <label class="input-row">
+            <span>Nombre del setup</span>
+            <input id="setupNameInput" type="text" placeholder="Viaje normal" />
+          </label>
+          <select id="setupSelect" aria-label="Setups guardados"></select>
+          <div class="setup-actions">
+            <button id="saveSetupBtn" type="button">Guardar setup</button>
+            <button id="loadSetupBtn" class="secondary" type="button">Cargar</button>
+            <button id="deleteSetupBtn" class="secondary" type="button">Borrar</button>
+          </div>
+        </section>
+
+        <section class="panel tab-panel" data-tab-panel="campaign">
+          <h2>Campana</h2>
+          <button id="exportBtn" class="secondary" type="button">Exportar campana</button>
+          <label class="file-button subtle">
+            <input id="importInput" type="file" accept="application/json" />
+            Importar campana
+          </label>
+        </section>
+
+        <section class="panel tab-panel" data-tab-panel="routes">
+          <h2>Ruta</h2>
+          <button id="routeModeBtn" type="button" hidden>Dibujar ruta</button>
+          <button id="measureModeBtn" class="secondary" type="button" hidden>Medir rapido</button>
+          <div class="route-actions">
+            <button id="clearRouteBtn" class="secondary" type="button">Limpiar ruta</button>
+            <button id="clearMeasureBtn" class="secondary" type="button">Limpiar medicion</button>
+          </div>
+          <div id="routeSummary" class="summary">Sin ruta todavia.</div>
+          <div id="measureSummary" class="summary compact">Sin medicion.</div>
+          <label class="input-row">
+            <span>Escala</span>
+            <input id="scaleInput" type="number" min="0.1" step="0.1" value="1" />
+          </label>
+          <label class="input-row">
+            <span>km por pixel</span>
+            <input id="kmPerPixelInput" type="number" min="0.001" step="0.001" value="0.05" />
+          </label>
+          <label class="input-row">
+            <span>Movimiento</span>
+            <select id="speedPresetSelect">
+              <option value="walkNormal">A pie normal - 38 km/dia</option>
+              <option value="walkSlow">A pie lento/sigilo - 29 km/dia</option>
+              <option value="walkFast">A pie rapido - 48 km/dia</option>
+              <option value="horse">A caballo - 64 km/dia</option>
+              <option value="forcedRun">Corriendo / marcha forzada - 60 km/dia</option>
+              <option value="swim">Nadando - 19 km/dia</option>
+              <option value="boat">Barca o costa - 38 km/dia</option>
+              <option value="custom">Personalizada</option>
+            </select>
+          </label>
+          <label class="input-row">
+            <span>Velocidad km/dia</span>
+            <input id="speedInput" type="number" min="1" step="1" value="38" />
+          </label>
+          <div class="terrain-grid">
+            <button class="terrain active" data-terrain="road" type="button">Camino x0.8</button>
+            <button class="terrain" data-terrain="plain" type="button">Llanura x1</button>
+            <button class="terrain" data-terrain="forest" type="button">Bosque x2</button>
+            <button class="terrain" data-terrain="mountain" type="button">Montana x3</button>
+            <button class="terrain" data-terrain="swamp" type="button">Pantano x2</button>
+            <button class="terrain" data-terrain="sea" type="button">Mar x1</button>
+          </div>
+          <p class="hint terrain-hint">La dificultad multiplica la distancia efectiva del tramo. Mar usa la velocidad de barco o nado.</p>
+        </section>
+
+        <section class="panel tab-panel" data-tab-panel="routes">
+          <h2>Rutas guardadas</h2>
+          <label class="input-row">
+            <span>Nombre</span>
+            <input id="routeNameInput" type="text" placeholder="Camino a Valdoria" />
+          </label>
+          <select id="savedRouteSelect" aria-label="Rutas guardadas"></select>
+          <div class="setup-actions route-save-actions">
+            <button id="saveRouteBtn" type="button">Guardar</button>
+            <button id="loadRouteBtn" class="secondary" type="button">Editar</button>
+            <button id="toggleSavedRoutesBtn" class="secondary" type="button">Ocultar</button>
+            <button id="deleteRouteBtn" class="secondary" type="button">Borrar</button>
+          </div>
+        </section>
+      </aside>
+
+      <main class="map-area">
+        <header class="topbar">
+          <div>
+            <span id="roleBadge" class="badge">Modo DM</span>
+            <span id="mapContextBadge" class="badge map-context">Mapa mundial</span>
+            <h2 id="mapTitle">Mapa principal</h2>
+            <div id="toolStatus" class="tool-status">Explorar: clic en una marca para verla.</div>
+          </div>
+          <div class="top-controls">
+            <button id="sidebarToggleBtn" class="secondary sidebar-toggle" type="button">Ocultar panel</button>
+            <div class="module-actions" aria-label="Modulos de partida">
+              <button id="mapModuleBtn" class="module-button active" data-module="map" type="button">Mapa</button>
+              <button id="initiativeModuleBtn" class="module-button" data-module="initiative" type="button">Iniciativa</button>
+              <button id="futureToolModuleBtn" class="module-button" data-module="futureTool" type="button">Nueva herramienta</button>
+            </div>
+          </div>
+        </header>
+        <div class="statusbar">
+          <span id="saveStatus">Listo</span>
+          <div id="mapControls" class="map-controls" aria-label="Controles del mapa">
+            <div class="top-role">
+              <div class="segmented" role="group" aria-label="Cambiar rol">
+                <button id="dmModeBtn" class="active" type="button">DM</button>
+                <button id="playerModeBtn" type="button">Jugadores</button>
+              </div>
+            </div>
+            <nav class="header-tabs" aria-label="Paneles">
+              <button class="tab-button active" data-tab="map" type="button">Mapa</button>
+              <button class="tab-button" data-tab="points" type="button">Puntos</button>
+              <button class="tab-button" data-tab="routes" type="button">Rutas</button>
+              <button class="tab-button" data-tab="campaign" type="button">Campana</button>
+            </nav>
+            <div class="tool-group" aria-label="Herramientas del mapa">
+              <span>Herramienta</span>
+              <div class="top-tools">
+                <button class="tool-button active" data-tool="explore" type="button">Explorar</button>
+                <button class="tool-button" data-tool="edit" type="button">Punto</button>
+                <button class="tool-button" data-tool="route" type="button">Ruta</button>
+                <button class="tool-button" data-tool="measure" type="button">Medir</button>
+              </div>
+            </div>
+            <div class="zoom-controls" aria-label="Controles de zoom">
+              <button id="backToMainBtn" class="secondary" type="button" title="Volver al mapa anterior">&larr;</button>
+              <button id="zoomOutBtn" type="button" title="Alejar">-</button>
+              <button id="zoomInBtn" type="button" title="Acercar">+</button>
+            </div>
+          </div>
+        </div>
+
+        <section id="initiativeModule" class="app-module" hidden>
+          <div class="module-header">
+            <div>
+              <span class="badge small">Combate</span>
+              <h2>Iniciativa</h2>
+            </div>
+            <div class="initiative-meta">
+              <strong id="initiativeRound">Ronda 1</strong>
+              <span id="initiativeTurn">Sin turno activo</span>
+            </div>
+          </div>
+
+          <form id="initiativeForm" class="initiative-form">
+            <label>
+              <span>Personaje guardado</span>
+              <select id="initiativeSavedPlayerSelect">
+                <option value="">Nuevo participante</option>
+              </select>
+            </label>
+            <label>
+              <span>Nombre</span>
+              <input id="initiativeNameInput" type="text" placeholder="Goblin, Aragorn, Dragon..." />
+            </label>
+            <label id="initiativeNicknameRow">
+              <span>Mote</span>
+              <input id="initiativeNicknameInput" type="text" placeholder="Roja, tuerta, alfa..." />
+            </label>
+            <label>
+              <span>Iniciativa</span>
+              <input id="initiativeValueInput" type="number" step="1" placeholder="14" />
+            </label>
+            <label>
+              <span>PG</span>
+              <input id="initiativeHpInput" type="text" inputmode="decimal" placeholder="25-6" />
+            </label>
+            <label>
+              <span>CA</span>
+              <input id="initiativeAcInput" type="number" step="1" placeholder="16" />
+            </label>
+            <label>
+              <span>Tipo</span>
+              <select id="initiativeTypeInput">
+                <option value="player">Jugador</option>
+                <option value="enemy">Enemigo</option>
+                <option value="ally">Aliado</option>
+              </select>
+            </label>
+            <button type="submit">Anadir</button>
+          </form>
+
+          <div class="initiative-toolbar">
+            <button id="initiativeSortBtn" class="secondary" type="button">Ordenar</button>
+            <button id="initiativeNextBtn" type="button">Siguiente turno</button>
+            <button id="initiativeResetBtn" class="secondary" type="button">Reset ronda</button>
+            <button id="initiativeClearBtn" class="secondary" type="button">Limpiar</button>
+          </div>
+
+          <div id="initiativeList" class="initiative-list"></div>
+        </section>
+
+        <section id="futureToolModule" class="app-module module-placeholder" hidden>
+          <div>
+            <span class="badge small">Proxima herramienta</span>
+            <h2>Nueva herramienta</h2>
+            <p>Este espacio queda preparado para el siguiente modulo de la campana.</p>
+          </div>
+        </section>
+
+        <div id="mapViewport" class="map-viewport">
+          <div id="mapCanvas" class="map-canvas">
+            <div id="emptyState" class="empty-state">
+              <strong id="emptyStateTitle">Carga tu mapa enorme</strong>
+              <span id="emptyStateText">Despues podras arrastrarlo, hacer zoom, poner puntos y trazar rutas.</span>
+            </div>
+            <img id="mapImage" alt="Mapa de campana" />
+            <svg id="routeLayer" class="route-layer" aria-hidden="true"></svg>
+            <div id="pointLayer" class="point-layer"></div>
+          </div>
+        </div>
+      </main>
+
+      <aside id="detailsPanel" class="details-panel">
+        <div class="details-empty">
+          <h2>Detalles</h2>
+          <p>Selecciona un punto del mapa para ver o editar su descripcion.</p>
+        </div>
+      </aside>
+    </div>
+
+    <template id="detailsTemplate">
+      <div class="details-content">
+        <div class="details-header">
+          <div>
+            <span class="badge small">Localizacion</span>
+            <h2 data-field="title"></h2>
+          </div>
+          <button data-action="close" class="icon-button" type="button" title="Cerrar">x</button>
+        </div>
+
+        <div data-view="player" class="player-view">
+          <p data-field="description" class="description"></p>
+          <button data-action="openSubmap" class="primary" type="button">Entrar en ampliacion</button>
+        </div>
+
+        <div data-view="locked" class="locked-view">
+          <h3>Zona no descubierta</h3>
+          <p>El DM todavia mantiene esta informacion oculta.</p>
+        </div>
+
+        <form data-view="dm" class="dm-form">
+          <div class="details-actions">
+            <button data-action="openSubmap" class="secondary" type="button">Entrar</button>
+            <button data-action="toggleHidden" class="secondary" type="button">Revelar/Ocultar</button>
+          </div>
+          <label>
+            <span>Titulo</span>
+            <input name="title" type="text" />
+          </label>
+          <label>
+            <span>Descripcion para jugadores</span>
+            <textarea name="description" rows="5"></textarea>
+          </label>
+          <div class="form-section">
+            <h3>Marca en el mapa</h3>
+            <div class="compact-grid">
+              <label>
+                <span>Color</span>
+                <input name="color" type="color" />
+              </label>
+              <label>
+                <span>Icono</span>
+                <select name="icon">
+                  <option value="assets/pin.png">Bolita</option>
+                  <option value="assets/castle.png">Castillo</option>
+                  <option value="assets/village.png">Ciudad</option>
+                  <option value="assets/camp.png">Campamento</option>
+                  <option value="assets/danger.png">Peligro</option>
+                  <option value="assets/dragon.png">Dragon</option>
+                  <option value="assets/merchant.png">Comerciante</option>
+                  <option value="assets/chest.png">Cofre</option>
+                  <option value="assets/bridge.png">Puente</option>
+                  <option value="assets/port.png">Puerto</option>
+                </select>
+              </label>
+            </div>
+            <label>
+              <span>Capa</span>
+              <select name="layer">
+                <option value="cities">Ciudades y villas</option>
+                <option value="dungeons">Mazmorras</option>
+                <option value="danger">Peligros</option>
+                <option value="factions">Facciones</option>
+                <option value="resources">Recursos</option>
+                <option value="notes">Notas</option>
+              </select>
+            </label>
+          </div>
+          <div class="details-actions">
+            <button data-action="save" class="primary" type="submit">Guardar</button>
+            <button data-action="delete" class="danger" type="button">Borrar punto</button>
+          </div>
+        </form>
+      </div>
+    </template>
+
+    <script src="app.js"></script>
+  </body>
+</html>
