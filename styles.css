@@ -775,7 +775,6 @@ textarea {
     "bracers figure hands"
     "feet figure focus"
     "ring1 mainHand ring2"
-    "actions actions actions"
     "offHand offHand offHand";
   gap: 8px 8px;
   align-self: start;
@@ -864,6 +863,31 @@ textarea {
 
 .equipment-figure.has-portrait::after {
   display: none;
+}
+
+.equipment-remove-portrait {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  min-height: 24px;
+  padding: 0;
+  border-color: rgba(216, 170, 71, 0.42);
+  border-radius: 50%;
+  background: rgba(10, 11, 8, 0.76);
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1;
+}
+
+.equipment-remove-portrait:hover {
+  border-color: rgba(216, 170, 71, 0.8);
+  background: rgba(216, 170, 71, 0.88);
+  color: #201a0d;
 }
 
 .equipment-add-photo {
@@ -1054,19 +1078,6 @@ textarea {
 .equipment-slot input:focus {
   border-bottom-color: #8e6d2d;
   outline: 2px solid rgba(216, 170, 71, 0.28);
-}
-
-.equipment-portrait-actions {
-  grid-area: actions;
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  min-width: 0;
-}
-
-.equipment-portrait-actions button {
-  min-height: 28px;
-  padding: 5px 10px;
 }
 
 .slot-head { grid-area: head; }

@@ -1094,19 +1094,20 @@ function createEquipmentFeed(actor) {
     image.className = "equipment-portrait";
     image.src = actor.portrait;
     image.alt = "";
-    figure.appendChild(image);
+    const removePortrait = document.createElement("button");
+    removePortrait.className = "equipment-remove-portrait";
+    removePortrait.dataset.action = "removePortrait";
+    removePortrait.type = "button";
+    removePortrait.title = "Quitar imagen";
+    removePortrait.textContent = "x";
+    figure.append(image, removePortrait);
   } else {
     const add = document.createElement("span");
     add.className = "equipment-add-photo";
     add.textContent = "+";
     figure.appendChild(add);
   }
-  const actions = document.createElement("div");
-  actions.className = "equipment-portrait-actions";
-  actions.innerHTML = `
-    <button class="secondary" data-action="removePortrait" type="button"${actor.portrait ? "" : " disabled"}>Quitar</button>
-  `;
-  feed.append(title, figure, actions);
+  feed.append(title, figure);
   EQUIPMENT_SLOTS.forEach((slot) => {
     const item = document.createElement("label");
     item.className = `equipment-slot slot-${slot.id}`;
@@ -2128,6 +2129,15 @@ els.resourceFeed.addEventListener("click", (event) => {
     openResourceDialog(button.dataset.actorId, button.dataset.resourceType);
     return;
   }
+  if (action === "removePortrait" && column) {
+    if (!window.confirm("Quitar la imagen de este personaje?")) return;
+    rememberUndo();
+    const actor = state.resources.actors.find((candidate) => candidate.id === column.dataset.actorId);
+    if (actor) actor.portrait = "";
+    renderResources();
+    saveState();
+    return;
+  }
   if (action === "uploadPortrait" && column) {
     state.portraitActorId = column.dataset.actorId;
     els.portraitUpload.click();
@@ -2148,11 +2158,6 @@ els.resourceFeed.addEventListener("click", (event) => {
   if (action === "toggleInventory" && column) {
     const actor = state.resources.actors.find((candidate) => candidate.id === column.dataset.actorId);
     if (actor) actor.inventoryOpen = !actor.inventoryOpen;
-  }
-
-  if (action === "removePortrait" && column) {
-    const actor = state.resources.actors.find((candidate) => candidate.id === column.dataset.actorId);
-    if (actor) actor.portrait = "";
   }
 
   if (action === "setExhaustion" && column) {
