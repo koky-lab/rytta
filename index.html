@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Rytta</title>
-    <link rel="stylesheet" href="styles.css?v=20260726-recursos-cards" />
+    <link rel="stylesheet" href="styles.css?v=20260726-resource-dialog" />
   </head>
   <body>
     <div id="appShell" class="app-shell">
@@ -254,35 +254,33 @@
             </form>
           </div>
 
-          <form id="resourceEntryForm" class="resource-entry-form">
-            <label>
-              <span>Destino</span>
-              <select id="resourceActorSelect"></select>
-            </label>
-            <label>
-              <span>Tipo</span>
-              <select id="resourceTypeInput">
-                <option value="coin">Moneda</option>
-                <option value="resource">Recurso</option>
-              </select>
-            </label>
+          <div id="resourceFeed" class="resource-feed"></div>
+        </section>
+
+        <div id="resourceDialog" class="modal-backdrop" hidden>
+          <form id="resourceDialogForm" class="resource-dialog">
+            <div class="details-header">
+              <div>
+                <span id="resourceDialogBadge" class="badge small">Recursos</span>
+                <h2 id="resourceDialogTitle">Anadir recurso</h2>
+              </div>
+              <button id="resourceDialogCloseBtn" class="icon-button" type="button" title="Cerrar">x</button>
+            </div>
             <label>
               <span>Nombre</span>
-              <input id="resourceNameInput" type="text" placeholder="Oro, raciones, flechas..." />
+              <input id="resourceDialogNameInput" type="text" placeholder="Raciones, flechas, oro..." />
             </label>
             <label>
               <span>Cantidad</span>
-              <input id="resourceQuantityInput" type="number" step="1" placeholder="10" />
+              <input id="resourceDialogQuantityInput" type="number" step="1" placeholder="10" />
             </label>
             <label>
               <span>Nota</span>
-              <input id="resourceNoteInput" type="text" placeholder="Botin, gasto, compra..." />
+              <input id="resourceDialogNoteInput" type="text" placeholder="Botin, gasto, compra..." />
             </label>
-            <button type="submit">Anadir</button>
+            <button type="submit">Guardar</button>
           </form>
-
-          <div id="resourceFeed" class="resource-feed"></div>
-        </section>
+        </div>
 
         <div id="mapViewport" class="map-viewport">
           <div id="mapCanvas" class="map-canvas">
@@ -381,6 +379,6 @@
       </div>
     </template>
 
-    <script src="app.js?v=20260726-recursos-cards"></script>
+    <script src="app.js?v=20260726-resource-dialog"></script>
   </body>
 </html>

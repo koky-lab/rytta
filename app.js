@@ -82,6 +82,10 @@ const state = {
     actors: [],
     entries: [],
   },
+  resourceDialog: {
+    actorId: "",
+    type: "resource",
+  },
   view: {
     scale: 1,
     x: 0,
@@ -168,13 +172,15 @@ const els = {
   initiativeList: document.querySelector("#initiativeList"),
   resourceActorForm: document.querySelector("#resourceActorForm"),
   resourceActorNameInput: document.querySelector("#resourceActorNameInput"),
-  resourceEntryForm: document.querySelector("#resourceEntryForm"),
-  resourceActorSelect: document.querySelector("#resourceActorSelect"),
-  resourceTypeInput: document.querySelector("#resourceTypeInput"),
-  resourceNameInput: document.querySelector("#resourceNameInput"),
-  resourceQuantityInput: document.querySelector("#resourceQuantityInput"),
-  resourceNoteInput: document.querySelector("#resourceNoteInput"),
   resourceFeed: document.querySelector("#resourceFeed"),
+  resourceDialog: document.querySelector("#resourceDialog"),
+  resourceDialogForm: document.querySelector("#resourceDialogForm"),
+  resourceDialogBadge: document.querySelector("#resourceDialogBadge"),
+  resourceDialogTitle: document.querySelector("#resourceDialogTitle"),
+  resourceDialogCloseBtn: document.querySelector("#resourceDialogCloseBtn"),
+  resourceDialogNameInput: document.querySelector("#resourceDialogNameInput"),
+  resourceDialogQuantityInput: document.querySelector("#resourceDialogQuantityInput"),
+  resourceDialogNoteInput: document.querySelector("#resourceDialogNoteInput"),
 };
 
 let drag = null;
@@ -881,7 +887,6 @@ function upsertSavedPlayerFromCombatant(combatant) {
 }
 
 function renderResources() {
-  renderResourceActorOptions();
   els.resourceFeed.innerHTML = "";
 
   if (!state.resources.actors.length) {
@@ -926,8 +931,8 @@ function renderResources() {
     const panels = document.createElement("div");
     panels.className = "resource-panels";
     panels.append(
-      createResourcePanel("Recursos", inventoryTotals, "Sin recursos"),
-      createResourcePanel("Monedas", coinTotals, "Sin monedas"),
+      createResourcePanel("Recursos", inventoryTotals, "Sin recursos", actor.id, "resource"),
+      createResourcePanel("Monedas", coinTotals, "Sin monedas", actor.id, "coin"),
     );
 
     const list = document.createElement("div");
@@ -958,27 +963,6 @@ function renderResources() {
   });
 }
 
-function renderResourceActorOptions() {
-  const current = els.resourceActorSelect.value || "";
-  els.resourceActorSelect.innerHTML = "";
-  if (!state.resources.actors.length) {
-    const option = document.createElement("option");
-    option.value = "";
-    option.textContent = "Anade un PJ primero";
-    els.resourceActorSelect.appendChild(option);
-    els.resourceActorSelect.disabled = true;
-    return;
-  }
-  els.resourceActorSelect.disabled = false;
-  state.resources.actors.forEach((actor) => {
-    const option = document.createElement("option");
-    option.value = actor.id;
-    option.textContent = actor.name;
-    els.resourceActorSelect.appendChild(option);
-  });
-  els.resourceActorSelect.value = state.resources.actors.some((actor) => actor.id === current) ? current : state.resources.actors[0].id;
-}
-
 function getResourceTotals(entries) {
   const totals = new Map();
   entries.forEach((entry) => {
@@ -994,11 +978,22 @@ function getResourceTotals(entries) {
   });
 }
 
-function createResourcePanel(title, items, emptyText) {
+function createResourcePanel(title, items, emptyText, actorId, type) {
   const panel = document.createElement("section");
   panel.className = "resource-panel";
+  panel.dataset.resourcePanelType = type;
   const heading = document.createElement("h4");
-  heading.textContent = title;
+  const headingText = document.createElement("span");
+  headingText.textContent = title;
+  const addButton = document.createElement("button");
+  addButton.className = "resource-add-button";
+  addButton.type = "button";
+  addButton.title = `Anadir ${type === "coin" ? "monedas" : "recurso"}`;
+  addButton.dataset.action = "openResourceDialog";
+  addButton.dataset.actorId = actorId;
+  addButton.dataset.resourceType = type;
+  addButton.textContent = "+";
+  heading.append(headingText, addButton);
   const body = document.createElement("div");
   body.className = "resource-panel-body";
   if (!items.length) {
@@ -1012,6 +1007,37 @@ function createResourcePanel(title, items, emptyText) {
   }
   panel.append(heading, body);
   return panel;
+}
+
+function openResourceDialog(actorId, type) {
+  const actor = state.resources.actors.find((candidate) => candidate.id === actorId);
+  if (!actor) return;
+  state.resourceDialog.actorId = actorId;
+  state.resourceDialog.type = type === "coin" ? "coin" : "resource";
+  const isCoin = state.resourceDialog.type === "coin";
+  els.resourceDialogBadge.textContent = actor.name;
+  els.resourceDialogTitle.textContent = isCoin ? "Anadir monedas" : "Anadir recurso";
+  els.resourceDialogNameInput.value = isCoin ? "Oro" : "";
+  els.resourceDialogQuantityInput.value = "";
+  els.resourceDialogNoteInput.value = "";
+  els.resourceDialogNameInput.placeholder = isCoin ? "Oro, plata, cobre..." : "Raciones, flechas, cuerda...";
+  els.resourceDialog.hidden = false;
+  requestAnimationFrame(() => {
+    if (isCoin) {
+      els.resourceDialogQuantityInput.focus();
+    } else {
+      els.resourceDialogNameInput.focus();
+    }
+  });
+}
+
+function closeResourceDialog() {
+  els.resourceDialog.hidden = true;
+  state.resourceDialog.actorId = "";
+  state.resourceDialog.type = "resource";
+  els.resourceDialogNameInput.value = "";
+  els.resourceDialogQuantityInput.value = "";
+  els.resourceDialogNoteInput.value = "";
 }
 
 function colorFromString(value) {
@@ -1930,30 +1956,6 @@ els.resourceActorForm.addEventListener("submit", (event) => {
   state.resources.actors.push(actor);
   els.resourceActorNameInput.value = "";
   renderResources();
-  els.resourceActorSelect.value = actor.id;
-  saveState();
-});
-
-els.resourceEntryForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  const actorId = els.resourceActorSelect.value;
-  const name = els.resourceNameInput.value.trim();
-  const quantity = Number(els.resourceQuantityInput.value);
-  if (!actorId || !name || !Number.isFinite(quantity) || quantity === 0) return;
-  rememberUndo();
-  state.resources.entries.push({
-    id: crypto.randomUUID(),
-    actorId,
-    type: els.resourceTypeInput.value,
-    name,
-    quantity,
-    note: els.resourceNoteInput.value.trim(),
-    createdAt: new Date().toISOString(),
-  });
-  els.resourceNameInput.value = "";
-  els.resourceQuantityInput.value = "";
-  els.resourceNoteInput.value = "";
-  renderResources();
   saveState();
 });
 
@@ -1962,6 +1964,11 @@ els.resourceFeed.addEventListener("click", (event) => {
   const entry = event.target.closest("[data-entry-id]");
   const action = event.target.closest("[data-action]")?.dataset.action;
   if (!action) return;
+  if (action === "openResourceDialog") {
+    const button = event.target.closest("[data-action]");
+    openResourceDialog(button.dataset.actorId, button.dataset.resourceType);
+    return;
+  }
   rememberUndo();
 
   if (action === "deleteResourceEntry" && entry) {
@@ -1976,6 +1983,34 @@ els.resourceFeed.addEventListener("click", (event) => {
 
   renderResources();
   saveState();
+});
+
+els.resourceDialogForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const actorId = state.resourceDialog.actorId;
+  const type = state.resourceDialog.type;
+  const name = els.resourceDialogNameInput.value.trim();
+  const quantity = Number(els.resourceDialogQuantityInput.value);
+  if (!actorId || !name || !Number.isFinite(quantity) || quantity === 0) return;
+  rememberUndo();
+  state.resources.entries.push({
+    id: crypto.randomUUID(),
+    actorId,
+    type,
+    name,
+    quantity,
+    note: els.resourceDialogNoteInput.value.trim(),
+    createdAt: new Date().toISOString(),
+  });
+  closeResourceDialog();
+  renderResources();
+  saveState();
+});
+
+els.resourceDialogCloseBtn.addEventListener("click", closeResourceDialog);
+
+els.resourceDialog.addEventListener("click", (event) => {
+  if (event.target === els.resourceDialog) closeResourceDialog();
 });
 
 document.querySelectorAll(".terrain").forEach((button) => {
