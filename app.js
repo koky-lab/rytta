@@ -955,6 +955,7 @@ function renderResources() {
     const inventoryTotals = getResourceTotals(actorEntries.filter((entry) => entry.type !== "coin" && entry.type !== "water"));
     const column = document.createElement("section");
     column.className = "resource-column";
+    column.classList.toggle("equipment-open", actor.inventoryOpen === true);
     column.dataset.actorId = actor.id;
     column.style.setProperty("--actor-accent", actor.color || colorFromString(actor.name));
 
@@ -1074,9 +1075,16 @@ function createExhaustionMeter(actor) {
 function createEquipmentFeed(actor) {
   const feed = document.createElement("div");
   feed.className = "equipment-feed";
+  const title = document.createElement("div");
+  title.className = "equipment-title";
+  title.textContent = "Equipo";
+  const figure = document.createElement("div");
+  figure.className = "equipment-figure";
+  figure.setAttribute("aria-hidden", "true");
+  feed.append(title, figure);
   EQUIPMENT_SLOTS.forEach((slot) => {
     const item = document.createElement("label");
-    item.className = "equipment-slot";
+    item.className = `equipment-slot slot-${slot.id}`;
     const value = actor.equipment?.[slot.id] || "";
     item.innerHTML = `
       <span>${escapeHtml(slot.label)}</span>
