@@ -994,34 +994,10 @@ function renderResources() {
       createResourcePanel("Agua", waterTotals, "Sin agua", actor.id, "water"),
     );
 
-    const list = document.createElement("div");
-    list.className = "resource-entry-list";
-    actorEntries
-      .filter((entry) => entry.type !== "coin" && entry.type !== "water")
-      .slice()
-      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-      .forEach((entry) => {
-        const item = document.createElement("article");
-        item.className = "resource-entry";
-        item.dataset.entryId = entry.id;
-        item.innerHTML = `
-          <strong>${escapeHtml(entry.quantity > 0 ? `+${entry.quantity}` : String(entry.quantity))} ${escapeHtml(entry.name)}</strong>
-          <span>Recurso${entry.note ? ` / ${escapeHtml(entry.note)}` : ""}</span>
-        `;
-        const remove = document.createElement("button");
-        remove.className = "secondary icon-button";
-        remove.type = "button";
-        remove.title = "Borrar movimiento";
-        remove.dataset.action = "deleteResourceEntry";
-        remove.textContent = "x";
-        item.appendChild(remove);
-        list.appendChild(item);
-      });
-
     if (actor.inventoryOpen) {
       column.append(header, exhaustion, label, createEquipmentFeed(actor));
     } else {
-      column.append(header, exhaustion, label, panels, list);
+      column.append(header, exhaustion, label, panels);
     }
     els.resourceFeed.appendChild(column);
   });
@@ -2142,7 +2118,6 @@ els.resourceActorForm.addEventListener("submit", (event) => {
 
 els.resourceFeed.addEventListener("click", (event) => {
   const column = event.target.closest("[data-actor-id]");
-  const entry = event.target.closest("[data-entry-id]");
   const action = event.target.closest("[data-action]")?.dataset.action;
   if (!action) return;
   if (action === "openResourceDialog") {
@@ -2165,10 +2140,6 @@ els.resourceFeed.addEventListener("click", (event) => {
     return;
   }
   rememberUndo();
-
-  if (action === "deleteResourceEntry" && entry) {
-    state.resources.entries = state.resources.entries.filter((candidate) => candidate.id !== entry.dataset.entryId);
-  }
 
   if (action === "deleteResourceActor" && column) {
     const actorId = column.dataset.actorId;
