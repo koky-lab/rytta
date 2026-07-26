@@ -49,3 +49,25 @@ Este proyecto es una web estatica. Si lo subes a GitHub, puedes publicarlo con G
 - Folder: `/ (root)`
 
 La app se servira desde `index.html`.
+
+## Subir a GitHub
+
+El repositorio local ya esta preparado en Git. Para crear el repositorio remoto y subirlo:
+
+```powershell
+.\publish-to-github.ps1
+```
+
+El script usa GitHub CLI. Si no has iniciado sesion, abrira el login de GitHub en el navegador. Por defecto crea un repositorio publico llamado `atlas-campana-dnd`.
+
+Para cambiar el nombre:
+
+```powershell
+.\publish-to-github.ps1 -RepoName "mi-atlas-dnd"
+```
+
+Para crearlo privado:
+
+```powershell
+.\publish-to-github.ps1 -Private
+```
