@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Rytta</title>
-    <link rel="stylesheet" href="styles.css?v=20260726-resource-dialog" />
+    <link rel="stylesheet" href="styles.css?v=20260726-gold-editor" />
   </head>
   <body>
     <div id="appShell" class="app-shell">
@@ -266,13 +266,14 @@
               </div>
               <button id="resourceDialogCloseBtn" class="icon-button" type="button" title="Cerrar">x</button>
             </div>
-            <label>
+            <label id="resourceDialogNameLabel">
               <span>Nombre</span>
               <input id="resourceDialogNameInput" type="text" placeholder="Raciones, flechas, oro..." />
             </label>
             <label>
               <span>Cantidad</span>
               <input id="resourceDialogQuantityInput" type="number" step="1" placeholder="10" />
+              <small id="resourceDialogQuantityHint" class="field-hint"></small>
             </label>
             <label>
               <span>Nota</span>
@@ -379,6 +380,6 @@
       </div>
     </template>
 
-    <script src="app.js?v=20260726-resource-dialog"></script>
+    <script src="app.js?v=20260726-gold-editor"></script>
   </body>
 </html>

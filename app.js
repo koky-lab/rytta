@@ -178,8 +178,10 @@ const els = {
   resourceDialogBadge: document.querySelector("#resourceDialogBadge"),
   resourceDialogTitle: document.querySelector("#resourceDialogTitle"),
   resourceDialogCloseBtn: document.querySelector("#resourceDialogCloseBtn"),
+  resourceDialogNameLabel: document.querySelector("#resourceDialogNameLabel"),
   resourceDialogNameInput: document.querySelector("#resourceDialogNameInput"),
   resourceDialogQuantityInput: document.querySelector("#resourceDialogQuantityInput"),
+  resourceDialogQuantityHint: document.querySelector("#resourceDialogQuantityHint"),
   resourceDialogNoteInput: document.querySelector("#resourceDialogNoteInput"),
 };
 
@@ -902,7 +904,9 @@ function renderResources() {
 
   state.resources.actors.forEach((actor) => {
     const actorEntries = state.resources.entries.filter((entry) => entry.actorId === actor.id);
-    const coinTotals = getResourceTotals(actorEntries.filter((entry) => entry.type === "coin"));
+    const coinTotals = getResourceTotals(
+      actorEntries.filter((entry) => entry.type === "coin").map((entry) => ({ ...entry, name: "Oro" })),
+    );
     const inventoryTotals = getResourceTotals(actorEntries.filter((entry) => entry.type !== "coin"));
     const column = document.createElement("section");
     column.className = "resource-column";
@@ -938,6 +942,7 @@ function renderResources() {
     const list = document.createElement("div");
     list.className = "resource-entry-list";
     actorEntries
+      .filter((entry) => entry.type !== "coin")
       .slice()
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
       .forEach((entry) => {
@@ -972,10 +977,12 @@ function getResourceTotals(entries) {
     existing.quantity += Number(entry.quantity) || 0;
     totals.set(key, existing);
   });
-  return Array.from(totals.values()).sort((a, b) => {
-    if (a.type !== b.type) return a.type === "coin" ? -1 : 1;
-    return a.name.localeCompare(b.name);
-  });
+  return Array.from(totals.values())
+    .filter((item) => item.quantity !== 0)
+    .sort((a, b) => {
+      if (a.type !== b.type) return a.type === "coin" ? -1 : 1;
+      return a.name.localeCompare(b.name);
+    });
 }
 
 function createResourcePanel(title, items, emptyText, actorId, type) {
@@ -1016,11 +1023,14 @@ function openResourceDialog(actorId, type) {
   state.resourceDialog.type = type === "coin" ? "coin" : "resource";
   const isCoin = state.resourceDialog.type === "coin";
   els.resourceDialogBadge.textContent = actor.name;
-  els.resourceDialogTitle.textContent = isCoin ? "Anadir monedas" : "Anadir recurso";
+  els.resourceDialogTitle.textContent = isCoin ? "Editar oro" : "Anadir recurso";
+  els.resourceDialogNameLabel.hidden = isCoin;
   els.resourceDialogNameInput.value = isCoin ? "Oro" : "";
   els.resourceDialogQuantityInput.value = "";
   els.resourceDialogNoteInput.value = "";
-  els.resourceDialogNameInput.placeholder = isCoin ? "Oro, plata, cobre..." : "Raciones, flechas, cuerda...";
+  els.resourceDialogQuantityInput.placeholder = isCoin ? "10 o -5" : "10";
+  els.resourceDialogQuantityHint.textContent = isCoin ? "Usa numeros positivos para sumar oro y negativos para restar." : "";
+  els.resourceDialogNameInput.placeholder = "Raciones, flechas, cuerda...";
   els.resourceDialog.hidden = false;
   requestAnimationFrame(() => {
     if (isCoin) {
@@ -1035,8 +1045,11 @@ function closeResourceDialog() {
   els.resourceDialog.hidden = true;
   state.resourceDialog.actorId = "";
   state.resourceDialog.type = "resource";
+  els.resourceDialogNameLabel.hidden = false;
   els.resourceDialogNameInput.value = "";
   els.resourceDialogQuantityInput.value = "";
+  els.resourceDialogQuantityInput.placeholder = "10";
+  els.resourceDialogQuantityHint.textContent = "";
   els.resourceDialogNoteInput.value = "";
 }
 
@@ -1989,7 +2002,7 @@ els.resourceDialogForm.addEventListener("submit", (event) => {
   event.preventDefault();
   const actorId = state.resourceDialog.actorId;
   const type = state.resourceDialog.type;
-  const name = els.resourceDialogNameInput.value.trim();
+  const name = type === "coin" ? "Oro" : els.resourceDialogNameInput.value.trim();
   const quantity = Number(els.resourceDialogQuantityInput.value);
   if (!actorId || !name || !Number.isFinite(quantity) || quantity === 0) return;
   rememberUndo();
