@@ -6,6 +6,18 @@ const CAMPAIGN_KEY = "campaign";
 const SETUPS_DB_KEY = "setups";
 const UNDO_LIMIT = 30;
 const DEFAULT_MARKER_ICON = "assets/pin.png";
+const DAILY_RESOURCE_COSTS = [
+  { type: "water", name: "Agua", quantity: -1 },
+  { type: "resource", name: "Raciones", quantity: -1 },
+];
+const EXHAUSTION_HELP = [
+  "1: Desventaja en pruebas de caracteristica",
+  "2: Velocidad a la mitad",
+  "3: Desventaja en ataques y salvaciones",
+  "4: Maximo de PG a la mitad",
+  "5: Velocidad reducida a 0",
+  "6: Muerte",
+].join("\n");
 
 const terrainRules = {
   road: { label: "Camino", multiplier: 0.8, color: "#d8aa47", note: "sendero claro" },
@@ -154,6 +166,7 @@ const els = {
   zoomOutBtn: document.querySelector("#zoomOutBtn"),
   initiativeModule: document.querySelector("#initiativeModule"),
   resourcesModule: document.querySelector("#resourcesModule"),
+  consumeDayBtn: document.querySelector("#consumeDayBtn"),
   initiativeForm: document.querySelector("#initiativeForm"),
   initiativeSavedPlayerSelect: document.querySelector("#initiativeSavedPlayerSelect"),
   initiativeNameInput: document.querySelector("#initiativeNameInput"),
@@ -283,7 +296,9 @@ function applyCampaignData(saved) {
   };
   state.resources = {
     actors: Array.isArray(saved.resources?.actors)
-      ? saved.resources.actors.filter((actor) => actor.id !== "party")
+      ? saved.resources.actors
+        .filter((actor) => actor.id !== "party")
+        .map((actor) => ({ ...actor, exhaustion: clamp(Number(actor.exhaustion) || 0, 0, 6) }))
       : [],
     entries: Array.isArray(saved.resources?.entries)
       ? saved.resources.entries.filter((entry) => entry.actorId !== "party")
@@ -907,7 +922,10 @@ function renderResources() {
     const coinTotals = getResourceTotals(
       actorEntries.filter((entry) => entry.type === "coin").map((entry) => ({ ...entry, name: "Oro" })),
     );
-    const inventoryTotals = getResourceTotals(actorEntries.filter((entry) => entry.type !== "coin"));
+    const waterTotals = getResourceTotals(
+      actorEntries.filter((entry) => entry.type === "water").map((entry) => ({ ...entry, name: "Agua" })),
+    );
+    const inventoryTotals = getResourceTotals(actorEntries.filter((entry) => entry.type !== "coin" && entry.type !== "water"));
     const column = document.createElement("section");
     column.className = "resource-column";
     column.dataset.actorId = actor.id;
@@ -928,6 +946,8 @@ function renderResources() {
     removeActor.textContent = "x";
     header.append(avatar, title, removeActor);
 
+    const exhaustion = createExhaustionMeter(actor);
+
     const label = document.createElement("div");
     label.className = "resource-inventory-label";
     label.textContent = "Inventario";
@@ -937,12 +957,13 @@ function renderResources() {
     panels.append(
       createResourcePanel("Recursos", inventoryTotals, "Sin recursos", actor.id, "resource"),
       createResourcePanel("Monedas", coinTotals, "Sin monedas", actor.id, "coin"),
+      createResourcePanel("Agua", waterTotals, "Sin agua", actor.id, "water"),
     );
 
     const list = document.createElement("div");
     list.className = "resource-entry-list";
     actorEntries
-      .filter((entry) => entry.type !== "coin")
+      .filter((entry) => entry.type !== "coin" && entry.type !== "water")
       .slice()
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
       .forEach((entry) => {
@@ -951,7 +972,7 @@ function renderResources() {
         item.dataset.entryId = entry.id;
         item.innerHTML = `
           <strong>${escapeHtml(entry.quantity > 0 ? `+${entry.quantity}` : String(entry.quantity))} ${escapeHtml(entry.name)}</strong>
-          <span>${entry.type === "coin" ? "Moneda" : "Recurso"}${entry.note ? ` / ${escapeHtml(entry.note)}` : ""}</span>
+          <span>Recurso${entry.note ? ` / ${escapeHtml(entry.note)}` : ""}</span>
         `;
         const remove = document.createElement("button");
         remove.className = "secondary icon-button";
@@ -963,7 +984,7 @@ function renderResources() {
         list.appendChild(item);
       });
 
-    column.append(header, label, panels, list);
+    column.append(header, exhaustion, label, panels, list);
     els.resourceFeed.appendChild(column);
   });
 }
@@ -985,9 +1006,42 @@ function getResourceTotals(entries) {
     });
 }
 
+function createExhaustionMeter(actor) {
+  const level = clamp(Number(actor.exhaustion) || 0, 0, 6);
+  const wrapper = document.createElement("div");
+  wrapper.className = "exhaustion-meter";
+  const title = document.createElement("span");
+  title.className = "exhaustion-label";
+  title.textContent = "Agotamiento";
+  const lights = document.createElement("div");
+  lights.className = "exhaustion-lights";
+  for (let index = 1; index <= 6; index += 1) {
+    const light = document.createElement("button");
+    light.className = "exhaustion-light";
+    light.classList.toggle("active", index <= level);
+    light.type = "button";
+    light.dataset.action = "setExhaustion";
+    light.dataset.level = String(index);
+    light.title = index <= level ? `Quitar nivel ${index}` : `Marcar nivel ${index}`;
+    light.setAttribute("aria-label", `${actor.name}: agotamiento ${index}`);
+    lights.appendChild(light);
+  }
+  const info = document.createElement("button");
+  info.className = "exhaustion-info";
+  info.type = "button";
+  info.title = EXHAUSTION_HELP;
+  info.textContent = "i";
+  const help = document.createElement("span");
+  help.className = "exhaustion-help";
+  help.textContent = EXHAUSTION_HELP;
+  wrapper.append(title, lights, info, help);
+  return wrapper;
+}
+
 function createResourcePanel(title, items, emptyText, actorId, type) {
   const panel = document.createElement("section");
   panel.className = "resource-panel";
+  if (type === "water") panel.classList.add("wide");
   panel.dataset.resourcePanelType = type;
   const heading = document.createElement("h4");
   const headingText = document.createElement("span");
@@ -995,7 +1049,7 @@ function createResourcePanel(title, items, emptyText, actorId, type) {
   const addButton = document.createElement("button");
   addButton.className = "resource-add-button";
   addButton.type = "button";
-  addButton.title = `Anadir ${type === "coin" ? "monedas" : "recurso"}`;
+  addButton.title = `Anadir ${type === "coin" ? "monedas" : type === "water" ? "agua" : "recurso"}`;
   addButton.dataset.action = "openResourceDialog";
   addButton.dataset.actorId = actorId;
   addButton.dataset.resourceType = type;
@@ -1020,20 +1074,25 @@ function openResourceDialog(actorId, type) {
   const actor = state.resources.actors.find((candidate) => candidate.id === actorId);
   if (!actor) return;
   state.resourceDialog.actorId = actorId;
-  state.resourceDialog.type = type === "coin" ? "coin" : "resource";
+  state.resourceDialog.type = ["coin", "water"].includes(type) ? type : "resource";
   const isCoin = state.resourceDialog.type === "coin";
+  const isWater = state.resourceDialog.type === "water";
   els.resourceDialogBadge.textContent = actor.name;
-  els.resourceDialogTitle.textContent = isCoin ? "Editar oro" : "Anadir recurso";
-  els.resourceDialogNameLabel.hidden = isCoin;
-  els.resourceDialogNameInput.value = isCoin ? "Oro" : "";
+  els.resourceDialogTitle.textContent = isCoin ? "Editar oro" : isWater ? "Editar agua" : "Anadir recurso";
+  els.resourceDialogNameLabel.hidden = isCoin || isWater;
+  els.resourceDialogNameInput.value = isCoin ? "Oro" : isWater ? "Agua" : "";
   els.resourceDialogQuantityInput.value = "";
   els.resourceDialogNoteInput.value = "";
-  els.resourceDialogQuantityInput.placeholder = isCoin ? "10 o -5" : "10";
-  els.resourceDialogQuantityHint.textContent = isCoin ? "Usa numeros positivos para sumar oro y negativos para restar." : "";
+  els.resourceDialogQuantityInput.placeholder = isCoin || isWater ? "10 o -1" : "10";
+  els.resourceDialogQuantityHint.textContent = isCoin
+    ? "Usa numeros positivos para sumar oro y negativos para restar."
+    : isWater
+      ? "Usa numeros positivos para anadir agua y negativos para consumirla."
+      : "";
   els.resourceDialogNameInput.placeholder = "Raciones, flechas, cuerda...";
   els.resourceDialog.hidden = false;
   requestAnimationFrame(() => {
-    if (isCoin) {
+    if (isCoin || isWater) {
       els.resourceDialogQuantityInput.focus();
     } else {
       els.resourceDialogNameInput.focus();
@@ -1965,6 +2024,7 @@ els.resourceActorForm.addEventListener("submit", (event) => {
     name,
     locked: false,
     color: colorFromString(name),
+    exhaustion: 0,
   };
   state.resources.actors.push(actor);
   els.resourceActorNameInput.value = "";
@@ -1994,6 +2054,33 @@ els.resourceFeed.addEventListener("click", (event) => {
     state.resources.entries = state.resources.entries.filter((candidate) => candidate.actorId !== actorId);
   }
 
+  if (action === "setExhaustion" && column) {
+    const actor = state.resources.actors.find((candidate) => candidate.id === column.dataset.actorId);
+    const requestedLevel = clamp(Number(event.target.closest("[data-action]").dataset.level) || 0, 0, 6);
+    if (actor) actor.exhaustion = actor.exhaustion === requestedLevel ? requestedLevel - 1 : requestedLevel;
+  }
+
+  renderResources();
+  saveState();
+});
+
+els.consumeDayBtn.addEventListener("click", () => {
+  if (!state.resources.actors.length) return;
+  rememberUndo();
+  const createdAt = new Date().toISOString();
+  state.resources.actors.forEach((actor) => {
+    DAILY_RESOURCE_COSTS.forEach((cost) => {
+      state.resources.entries.push({
+        id: crypto.randomUUID(),
+        actorId: actor.id,
+        type: cost.type,
+        name: cost.name,
+        quantity: cost.quantity,
+        note: "Consumo diario",
+        createdAt,
+      });
+    });
+  });
   renderResources();
   saveState();
 });
@@ -2002,7 +2089,7 @@ els.resourceDialogForm.addEventListener("submit", (event) => {
   event.preventDefault();
   const actorId = state.resourceDialog.actorId;
   const type = state.resourceDialog.type;
-  const name = type === "coin" ? "Oro" : els.resourceDialogNameInput.value.trim();
+  const name = type === "coin" ? "Oro" : type === "water" ? "Agua" : els.resourceDialogNameInput.value.trim();
   const quantity = Number(els.resourceDialogQuantityInput.value);
   if (!actorId || !name || !Number.isFinite(quantity) || quantity === 0) return;
   rememberUndo();

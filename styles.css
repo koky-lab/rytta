@@ -598,6 +598,14 @@ textarea {
   align-items: center;
 }
 
+.resource-header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: end;
+}
+
 .resource-actor-form input {
   width: min(180px, 34vw);
 }
@@ -654,6 +662,83 @@ textarea {
   line-height: 0.95;
 }
 
+.exhaustion-meter {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr 28px;
+  gap: 8px;
+  align-items: center;
+  padding: 9px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.exhaustion-label {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.exhaustion-lights {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 5px;
+}
+
+.exhaustion-light {
+  min-width: 0;
+  width: 100%;
+  min-height: 18px;
+  height: 18px;
+  padding: 0;
+  border-radius: 999px;
+  border-color: rgba(255, 255, 255, 0.12);
+  background: #0c0d0a;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.exhaustion-light.active {
+  border-color: rgba(225, 178, 63, 0.85);
+  background: #e1b23f;
+  box-shadow: 0 0 14px rgba(225, 178, 63, 0.42);
+}
+
+.exhaustion-info {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  min-height: 28px;
+  padding: 0;
+  border-radius: 50%;
+  color: var(--accent);
+  font-weight: 900;
+}
+
+.exhaustion-help {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 6;
+  display: none;
+  width: min(280px, 78vw);
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #171814;
+  color: var(--ink);
+  font-size: 12px;
+  line-height: 1.45;
+  white-space: pre-line;
+  box-shadow: var(--shadow);
+}
+
+.exhaustion-info:hover + .exhaustion-help,
+.exhaustion-info:focus + .exhaustion-help {
+  display: block;
+}
+
 .resource-inventory-label {
   display: grid;
   place-items: center;
@@ -681,6 +766,11 @@ textarea {
   border-radius: 8px;
   background: #171814;
   overflow: hidden;
+}
+
+.resource-panel.wide {
+  grid-column: 1 / -1;
+  min-height: 96px;
 }
 
 .resource-panel h4 {
@@ -811,6 +901,10 @@ textarea {
   gap: 6px;
   color: var(--muted);
   font-size: 13px;
+}
+
+.resource-dialog label[hidden] {
+  display: none;
 }
 
 .field-hint {
@@ -1350,6 +1444,12 @@ textarea {
   .resource-actor-form {
     display: grid;
     grid-template-columns: 1fr auto;
+  }
+
+  .resource-header-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    justify-content: stretch;
   }
 
   .resource-actor-form input {

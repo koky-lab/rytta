@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Rytta</title>
-    <link rel="stylesheet" href="styles.css?v=20260726-gold-editor" />
+    <link rel="stylesheet" href="styles.css?v=20260726-survival" />
   </head>
   <body>
     <div id="appShell" class="app-shell">
@@ -248,10 +248,13 @@
               <span class="badge small">Tesoro y recursos</span>
               <h2>Recursos</h2>
             </div>
-            <form id="resourceActorForm" class="resource-actor-form">
-              <input id="resourceActorNameInput" type="text" placeholder="Nombre PJ" />
-              <button type="submit">Anadir PJ</button>
-            </form>
+            <div class="resource-header-actions">
+              <button id="consumeDayBtn" class="secondary" type="button">Consumir dia</button>
+              <form id="resourceActorForm" class="resource-actor-form">
+                <input id="resourceActorNameInput" type="text" placeholder="Nombre PJ" />
+                <button type="submit">Anadir PJ</button>
+              </form>
+            </div>
           </div>
 
           <div id="resourceFeed" class="resource-feed"></div>
@@ -380,6 +383,6 @@
       </div>
     </template>
 
-    <script src="app.js?v=20260726-gold-editor"></script>
+    <script src="app.js?v=20260726-survival"></script>
   </body>
 </html>
