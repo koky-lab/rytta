@@ -18,6 +18,20 @@ const EXHAUSTION_HELP = [
   "5: Velocidad reducida a 0",
   "6: Muerte",
 ].join("\n");
+const EQUIPMENT_SLOTS = [
+  { id: "head", label: "Cabeza", hint: "Casco, sombrero, diadema" },
+  { id: "neck", label: "Cuello", hint: "Amuleto, collar, simbolo sagrado" },
+  { id: "cloak", label: "Capa", hint: "Capa o manto" },
+  { id: "armor", label: "Armadura", hint: "Pechera, cuero, cota, placas" },
+  { id: "bracers", label: "Brazos", hint: "Brazales o brazaletes" },
+  { id: "hands", label: "Manos", hint: "Guantes o guanteletes" },
+  { id: "feet", label: "Pies", hint: "Botas o calzado" },
+  { id: "ring1", label: "Anillo 1", hint: "Anillo equipado" },
+  { id: "ring2", label: "Anillo 2", hint: "Segundo anillo equipado" },
+  { id: "mainHand", label: "Mano principal", hint: "Arma, vara, baston" },
+  { id: "offHand", label: "Mano secundaria", hint: "Escudo, arma ligera, foco" },
+  { id: "focus", label: "Foco / herramienta", hint: "Foco arcano, instrumento, herramienta" },
+];
 
 const terrainRules = {
   road: { label: "Camino", multiplier: 0.8, color: "#d8aa47", note: "sendero claro" },
@@ -298,7 +312,7 @@ function applyCampaignData(saved) {
     actors: Array.isArray(saved.resources?.actors)
       ? saved.resources.actors
         .filter((actor) => actor.id !== "party")
-        .map((actor) => ({ ...actor, exhaustion: clamp(Number(actor.exhaustion) || 0, 0, 6) }))
+        .map(normalizeResourceActor)
       : [],
     entries: Array.isArray(saved.resources?.entries)
       ? saved.resources.entries.filter((entry) => entry.actorId !== "party")
@@ -903,6 +917,19 @@ function upsertSavedPlayerFromCombatant(combatant) {
   combatant.savedPlayerId = saved.id;
 }
 
+function normalizeResourceActor(actor) {
+  const equipment = {};
+  EQUIPMENT_SLOTS.forEach((slot) => {
+    equipment[slot.id] = typeof actor.equipment?.[slot.id] === "string" ? actor.equipment[slot.id] : "";
+  });
+  return {
+    ...actor,
+    exhaustion: clamp(Number(actor.exhaustion) || 0, 0, 6),
+    inventoryOpen: actor.inventoryOpen === true,
+    equipment,
+  };
+}
+
 function renderResources() {
   els.resourceFeed.innerHTML = "";
 
@@ -948,9 +975,11 @@ function renderResources() {
 
     const exhaustion = createExhaustionMeter(actor);
 
-    const label = document.createElement("div");
+    const label = document.createElement("button");
     label.className = "resource-inventory-label";
-    label.textContent = "Inventario";
+    label.type = "button";
+    label.dataset.action = "toggleInventory";
+    label.textContent = actor.inventoryOpen ? "Recursos" : "Inventario";
 
     const panels = document.createElement("div");
     panels.className = "resource-panels";
@@ -984,7 +1013,11 @@ function renderResources() {
         list.appendChild(item);
       });
 
-    column.append(header, exhaustion, label, panels, list);
+    if (actor.inventoryOpen) {
+      column.append(header, exhaustion, label, createEquipmentFeed(actor));
+    } else {
+      column.append(header, exhaustion, label, panels, list);
+    }
     els.resourceFeed.appendChild(column);
   });
 }
@@ -1036,6 +1069,23 @@ function createExhaustionMeter(actor) {
   help.textContent = EXHAUSTION_HELP;
   wrapper.append(title, lights, info, help);
   return wrapper;
+}
+
+function createEquipmentFeed(actor) {
+  const feed = document.createElement("div");
+  feed.className = "equipment-feed";
+  EQUIPMENT_SLOTS.forEach((slot) => {
+    const item = document.createElement("label");
+    item.className = "equipment-slot";
+    const value = actor.equipment?.[slot.id] || "";
+    item.innerHTML = `
+      <span>${escapeHtml(slot.label)}</span>
+      <small>${escapeHtml(slot.hint)}</small>
+      <input data-equipment-slot="${escapeHtml(slot.id)}" type="text" value="${escapeHtml(value)}" placeholder="Vacio" />
+    `;
+    feed.appendChild(item);
+  });
+  return feed;
 }
 
 function createResourcePanel(title, items, emptyText, actorId, type) {
@@ -2025,6 +2075,8 @@ els.resourceActorForm.addEventListener("submit", (event) => {
     locked: false,
     color: colorFromString(name),
     exhaustion: 0,
+    inventoryOpen: false,
+    equipment: Object.fromEntries(EQUIPMENT_SLOTS.map((slot) => [slot.id, ""])),
   };
   state.resources.actors.push(actor);
   els.resourceActorNameInput.value = "";
@@ -2054,6 +2106,11 @@ els.resourceFeed.addEventListener("click", (event) => {
     state.resources.entries = state.resources.entries.filter((candidate) => candidate.actorId !== actorId);
   }
 
+  if (action === "toggleInventory" && column) {
+    const actor = state.resources.actors.find((candidate) => candidate.id === column.dataset.actorId);
+    if (actor) actor.inventoryOpen = !actor.inventoryOpen;
+  }
+
   if (action === "setExhaustion" && column) {
     const actor = state.resources.actors.find((candidate) => candidate.id === column.dataset.actorId);
     const requestedLevel = clamp(Number(event.target.closest("[data-action]").dataset.level) || 0, 0, 6);
@@ -2061,6 +2118,38 @@ els.resourceFeed.addEventListener("click", (event) => {
   }
 
   renderResources();
+  saveState();
+});
+
+els.resourceFeed.addEventListener("keydown", (event) => {
+  const input = event.target.closest("[data-equipment-slot]");
+  if (!input || event.key !== "Enter") return;
+  event.preventDefault();
+  input.blur();
+});
+
+els.resourceFeed.addEventListener("focusin", (event) => {
+  const input = event.target.closest("[data-equipment-slot]");
+  if (!input) return;
+  input.dataset.originalValue = input.value;
+  input.dataset.undoStored = "false";
+});
+
+els.resourceFeed.addEventListener("input", (event) => {
+  const input = event.target.closest("[data-equipment-slot]");
+  const column = event.target.closest("[data-actor-id]");
+  if (!input || !column) return;
+  const actor = state.resources.actors.find((candidate) => candidate.id === column.dataset.actorId);
+  if (!actor) return;
+  actor.equipment = actor.equipment || {};
+  const slot = input.dataset.equipmentSlot;
+  const nextValue = input.value.trim();
+  if ((actor.equipment[slot] || "") === nextValue) return;
+  if (input.dataset.undoStored !== "true") {
+    rememberUndo();
+    input.dataset.undoStored = "true";
+  }
+  actor.equipment[slot] = nextValue;
   saveState();
 });
 
