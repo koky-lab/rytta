@@ -1,22 +1,51 @@
 <!doctype html>
 <html lang="es">
   <head>
+  <script src="gate.js?v=20261024-shared"></script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Rytta</title>
-    <link rel="stylesheet" href="styles.css?v=20260726-daily-exhaustion" />
+    <link rel="stylesheet" href="styles.css?v=20261021-backpack-edit" />
+    <link rel="stylesheet" href="theme.css?v=20261021-phase2" />
+    <link rel="stylesheet" href="polish.css?v=20261021-phase2" />
+    <link rel="stylesheet" href="portal.css?v=20261024-shared" />
+    <meta name="theme-color" content="#151719" />
   </head>
   <body>
-    <div id="appShell" class="app-shell">
-      <aside class="sidebar">
+    <div id="sharedConnectionOverlay" class="shared-connection-overlay"><div class="shared-connection-card"><span class="badge">Mesa compartida</span><h2>Conexión con Rytta</h2><p id="sharedConnectionMessage" role="status">Cargando la campaña del servidor…</p><button id="retrySharedBtn" type="button">Reintentar conexión</button><button id="useServerVersionBtn" class="secondary" type="button" hidden>Cargar versión del servidor</button><a href="mesa.html" target="_blank" rel="noopener">Entrar con mi cuenta DM</a></div></div><div id="appShell" class="app-shell" inert>
+      <header class="topbar campaign-header">
+        <a class="campaign-brand" href="#" aria-label="Rytta, mesa de campaña"><span class="campaign-sigil" aria-hidden="true">R</span><span><strong>RYTTA</strong><small>Tu mesa. Tu mundo.</small></span></a>
+                    <div class="module-actions" aria-label="Modulos de partida">
+              <button id="mapModuleBtn" class="module-button active" data-module="map" type="button">Mapa</button>
+              <button id="initiativeModuleBtn" class="module-button" data-module="initiative" type="button">Iniciativa</button>
+              <button class="module-button" data-module="merchants" type="button">Comerciantes</button>
+              <button id="resourcesModuleBtn" class="module-button" data-module="resources" type="button">Recursos</button>
+            </div>
+        <div class="campaign-header-actions"><span id="onlineSyncBadge" class="online-sync-badge" role="status" hidden></span>            <div class="top-role">
+              <div class="segmented" role="group" aria-label="Cambiar rol">
+                <button id="dmModeBtn" class="active" type="button">DM</button>
+                <button id="playerModeBtn" type="button">Jugadores</button>
+              </div></div>            <button id="sidebarToggleBtn" class="secondary sidebar-toggle" type="button">Ocultar panel</button>
+          <button id="sessionModeBtn" class="secondary session-toggle" type="button" aria-pressed="false" title="Priorizar el contenido de la partida">Modo sesión</button>
+          <button id="atlasMobileToggleBtn" class="secondary atlas-mobile-toggle" type="button" aria-controls="atlasSidebar" aria-expanded="false">Abrir atlas</button>
+        </div>
+      </header>
+      <aside id="atlasSidebar" class="sidebar" aria-label="Atlas de campaña">
         <div class="brand">
-          <div class="brand-mark">D20</div>
+          <div class="brand-mark" aria-hidden="true">✦</div>
           <div>
-            <h1>Rytta</h1>
-            <p>Mapa, secretos y rutas para tu mesa.</p>
+            <h1 id="atlasTitle">Atlas de campaña</h1>
+            <p>El mundo espera al otro lado.</p>
           </div>
+          <button id="atlasCloseBtn" class="secondary atlas-close" type="button" aria-label="Cerrar atlas">Cerrar</button>
         </div>
 
+            <nav class="header-tabs atlas-tabs" aria-label="Paneles">
+              <button class="tab-button active" data-tab="map" type="button">Mapa</button>
+              <button class="tab-button" data-tab="points" type="button">Puntos</button>
+              <button class="tab-button" data-tab="routes" type="button">Rutas</button>
+              <button class="tab-button" data-tab="campaign" type="button">Campaña</button>
+            </nav>
         <section class="panel tab-panel active" data-tab-panel="map">
           <h2>Mapa</h2>
           <label class="file-button">
@@ -63,11 +92,11 @@
         </section>
 
         <section class="panel tab-panel" data-tab-panel="campaign">
-          <h2>Campana</h2>
-          <button id="exportBtn" class="secondary" type="button">Exportar campana</button>
+          <h2>Campaña</h2>
+          <button id="exportBtn" class="secondary" type="button">Exportar campaña</button>
           <label class="file-button subtle">
             <input id="importInput" type="file" accept="application/json" />
-            Importar campana
+            Importar campaña
           </label>
         </section>
 
@@ -131,40 +160,21 @@
             <button id="deleteRouteBtn" class="secondary" type="button">Borrar</button>
           </div>
         </section>
+        <section class="panel tab-panel" data-tab-panel="campaign"><h2>Mesa compartida</h2><p id="onlineStatus" class="online-status">La campaña se carga y guarda en el servidor para todos.</p><div class="online-actions"><a href="mesa.html">Entrar / Gestionar cuentas</a><button id="shareOnlineBtn" type="button">Sincronizar cambios</button><button id="openOnlineBtn" class="secondary" type="button">Actualizar desde la mesa</button></div></section>
       </aside>
 
       <main class="map-area">
-        <header class="topbar">
-          <div>
+
+        <div class="statusbar">
+          <div class="map-context-heading">
             <span id="roleBadge" class="badge">Modo DM</span>
             <span id="mapContextBadge" class="badge map-context">Mapa mundial</span>
             <h2 id="mapTitle">Mapa principal</h2>
             <div id="toolStatus" class="tool-status">Explorar: clic en una marca para verla.</div>
           </div>
-          <div class="top-controls">
-            <button id="sidebarToggleBtn" class="secondary sidebar-toggle" type="button">Ocultar panel</button>
-            <div class="module-actions" aria-label="Modulos de partida">
-              <button id="mapModuleBtn" class="module-button active" data-module="map" type="button">Mapa</button>
-              <button id="initiativeModuleBtn" class="module-button" data-module="initiative" type="button">Iniciativa</button>
-              <button id="resourcesModuleBtn" class="module-button" data-module="resources" type="button">Recursos</button>
-            </div>
-          </div>
-        </header>
-        <div class="statusbar">
           <span id="saveStatus">Listo</span>
           <div id="mapControls" class="map-controls" aria-label="Controles del mapa">
-            <div class="top-role">
-              <div class="segmented" role="group" aria-label="Cambiar rol">
-                <button id="dmModeBtn" class="active" type="button">DM</button>
-                <button id="playerModeBtn" type="button">Jugadores</button>
-              </div>
-            </div>
-            <nav class="header-tabs" aria-label="Paneles">
-              <button class="tab-button active" data-tab="map" type="button">Mapa</button>
-              <button class="tab-button" data-tab="points" type="button">Puntos</button>
-              <button class="tab-button" data-tab="routes" type="button">Rutas</button>
-              <button class="tab-button" data-tab="campaign" type="button">Campana</button>
-            </nav>
+
             <div class="tool-group" aria-label="Herramientas del mapa">
               <span>Herramienta</span>
               <div class="top-tools">
@@ -183,10 +193,11 @@
         </div>
         <div id="notificationStack" class="notification-stack" aria-live="polite"></div>
 
+        <section id="merchantsModule" class="app-module" aria-label="Comerciantes" hidden></section>
         <section id="initiativeModule" class="app-module" hidden>
           <div class="module-header">
             <div>
-              <span class="badge small">Combate</span>
+              <span class="badge small">El orden de la batalla</span>
               <h2>Iniciativa</h2>
             </div>
             <div class="initiative-meta">
@@ -195,6 +206,7 @@
             </div>
           </div>
 
+          <details id="combatComposer" class="combat-composer" open><summary>Añadir combatiente <span>Personajes, aliados y enemigos</span></summary>
           <form id="initiativeForm" class="initiative-form">
             <label>
               <span>Personaje guardado</span>
@@ -230,10 +242,12 @@
                 <option value="ally">Aliado</option>
               </select>
             </label>
-            <button type="submit">Anadir</button>
+            <button type="submit">Añadir</button>
           </form>
 
+          </details>
           <div class="initiative-toolbar">
+            <button id="combatComposerToggleBtn" class="secondary" type="button" aria-controls="combatComposer" aria-expanded="true">Ocultar formulario</button>
             <button id="initiativeSortBtn" class="secondary" type="button">Ordenar</button>
             <button id="initiativeNextBtn" type="button">Siguiente turno</button>
             <button id="initiativeResetBtn" class="secondary" type="button">Reset ronda</button>
@@ -246,19 +260,19 @@
         <section id="resourcesModule" class="app-module resources-module" hidden>
           <div class="module-header">
             <div>
-              <span class="badge small">Tesoro y recursos</span>
-              <h2>Recursos</h2>
+              <span class="badge small">El grupo de aventureros</span>
+              <h2>Personajes y pertenencias</h2>
             </div>
             <div class="resource-header-actions">
-              <button id="consumeDayBtn" class="secondary" type="button">Consumir dia</button>
+              <button id="syncResourcesBtn" class="secondary" type="button">Sincronizar ahora</button><button id="consumeDayBtn" class="secondary" type="button">Consumir dia</button>
               <form id="resourceActorForm" class="resource-actor-form">
                 <input id="resourceActorNameInput" type="text" placeholder="Nombre PJ" />
-                <button type="submit">Anadir PJ</button>
+                <button type="submit">Añadir PJ</button>
               </form>
             </div>
           </div>
 
-          <div id="resourceFeed" class="resource-feed"></div>
+          <p id="resourceSyncStatus" class="online-status resource-sync-status" role="status">Cargando la campaña compartida del servidor…</p><div id="resourceFeed" class="resource-feed"></div>
           <input id="portraitUpload" type="file" accept="image/*" hidden />
         </section>
 
@@ -267,7 +281,7 @@
             <div class="details-header">
               <div>
                 <span id="resourceDialogBadge" class="badge small">Recursos</span>
-                <h2 id="resourceDialogTitle">Anadir recurso</h2>
+                <h2 id="resourceDialogTitle">Añadir recurso</h2>
               </div>
               <button id="resourceDialogCloseBtn" class="icon-button" type="button" title="Cerrar">x</button>
             </div>
@@ -291,8 +305,8 @@
         <div id="mapViewport" class="map-viewport">
           <div id="mapCanvas" class="map-canvas">
             <div id="emptyState" class="empty-state">
-              <strong id="emptyStateTitle">Carga tu mapa enorme</strong>
-              <span id="emptyStateText">Despues podras arrastrarlo, hacer zoom, poner puntos y trazar rutas.</span>
+              <strong id="emptyStateTitle">Toda aventura empieza con un mapa</strong>
+              <span id="emptyStateText">Carga tu mapa desde el atlas. Explora el mundo, descubre sus secretos y traza el próximo viaje.</span>
             </div>
             <img id="mapImage" alt="Mapa de campana" />
             <svg id="routeLayer" class="route-layer" aria-hidden="true"></svg>
@@ -385,6 +399,12 @@
       </div>
     </template>
 
-    <script src="app.js?v=20260726-daily-exhaustion"></script>
+    <script src="merchants-data.js"></script>
+    <script src="merchants.js?v=20261021-phase2"></script>
+    <script src="backpack.js?v=20261021-backpack-edit"></script>
+    <script src="app.js?v=20261024-shared"></script>
+    <script src="usability.js?v=20261021-phase2"></script>
+    <script src="sync-core.js?v=20261024-sync3"></script>
+    <script src="online.js?v=20261024-shared"></script>
   </body>
 </html>

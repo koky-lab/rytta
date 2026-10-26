@@ -1,0 +1,220 @@
+/* Phase 2 · Readable at the table, touch friendly, quietly animated. */
+:root { --ui-header-height:76px; --muted:#b8b6ad; --ui-motion:160ms; }
+body { font-size:15px; line-height:1.5; }
+button,input,select,textarea { line-height:1.4; }
+input,select,textarea { font-size:14px; }
+.hint,.field-hint,.tool-status { font-size:13px; line-height:1.65; color:#b8b6ad; }
+.badge,.badge.small,.module-header .badge,.panel h2 { font-size:12px; line-height:1.5; letter-spacing:.07em; }
+.campaign-brand small { font-size:12px; color:#b8b6ad; letter-spacing:.025em; }
+.module-button { font-size:14px; min-height:44px; }
+.segmented button { min-height:34px; font-size:12px; }
+.sidebar-toggle { max-width:none; font-size:12px; }
+.header-tabs .tab-button,.panel button,.file-button { font-size:13px; min-height:40px; }
+.input-row > span,.initiative-form label,.resource-dialog label { font-size:13px; color:#bebbb0; }
+.brand p { font-size:12px; color:#b8b6ad; }
+.tool-group .tool-button { font-size:13px; min-height:40px; padding:7px 10px; }
+.zoom-controls button { width:36px; min-height:36px; }
+.map-context-heading .badge { font-size:12px; }
+.map-context-heading #toolStatus { max-width:360px; }
+#saveStatus { font-size:12px; color:#b3c3ac; bottom:6px; }
+.statusbar { padding-bottom:26px; }
+.summary { font-size:13px; }
+.terrain-grid .terrain { font-size:12px; }
+.initiative-main > span,.initiative-meta span { font-size:13px; }
+.initiative-main .death-mark,.layer-list small { font-size:12px; }
+.point.hidden::before { font-size:12px; }
+.initiative-stat-input span { font-size:12px; letter-spacing:.04em; }
+.initiative-nickname { font-size:13px; min-height:36px; }
+.initiative-row.active { border-color:#d2b179; box-shadow:inset 4px 0 #d2b179,0 8px 30px #0002; padding-top:34px; }
+.initiative-row.active::before { font-size:12px; top:9px; letter-spacing:.1em; }
+.initiative-rank { font-variant-numeric:tabular-nums; }
+.initiative-toolbar { position:sticky; top:0; z-index:8; display:flex; align-items:center; flex-wrap:wrap; gap:10px; margin:0 0 18px; padding:12px; border:1px solid #6d604655; border-radius:10px; background:#191e20f5; backdrop-filter:blur(8px); box-shadow:0 8px 22px #0004; }
+.initiative-toolbar button { font-size:13px; min-height:42px; }
+#initiativeNextBtn { min-height:46px; font-size:14px; padding:10px 25px; margin-right:auto; }
+#initiativeNextBtn::after { content:' →'; margin-left:8px; }
+.combat-composer summary { font-size:14px; min-height:48px; }
+.combat-composer summary span { font-size:13px; }
+.combat-composer:not([open]) { display:none; }
+.exhaustion-label { font-size:12px; letter-spacing:0; }
+.exhaustion-meter { grid-template-columns:1fr 28px; }
+.exhaustion-label { grid-column:1; }
+.exhaustion-lights { grid-column:1; grid-row:2; }
+.exhaustion-info { grid-column:2; grid-row:1 / 3; align-self:center; }
+.exhaustion-help { font-size:13px; }
+.exhaustion-light { height:20px; min-height:20px; }
+.resource-inventory-label { font-size:13px; min-height:44px; letter-spacing:.03em; }
+.resource-inventory-label::after { font-size:12px; }
+.resource-panel h4 { font-size:12px; letter-spacing:.04em; }
+.resource-panel-body { font-size:14px; line-height:1.6; }
+[data-resource-panel-type=backpack] .resource-add-button { font-size:12px; min-height:32px; padding:6px 10px; }
+.backpack-item-actions button { font-size:12px; min-height:34px; padding:5px 9px; }
+.equipment-title { font-size:13px; }
+.equipment-slot { gap:6px; }
+.equipment-slot span { font-size:12px; letter-spacing:0; }
+.equipment-slot small { font-size:12px; line-height:1.5; color:#3b382f; }
+.equipment-slot input { font-size:14px; min-height:36px; height:auto; }
+.equipment-feed { grid-template-columns:minmax(0,1fr) 150px minmax(0,1fr); }
+.merchant-list::before { font-size:12px; letter-spacing:.07em; }
+.merchant-list button { font-size:13px; min-height:48px; }
+.merchant-actions label { font-size:13px; }
+.merchant-actions button,.merchant-table td button { font-size:12px; min-height:36px; padding:6px 10px; }
+.merchant-table { font-size:14px; }
+.merchant-table th { font-size:12px; letter-spacing:.04em; }
+.merchant-table td:nth-child(3) { font-size:13px; color:#b8beb3; }
+.merchant-purchase { min-width:205px; }
+.merchant-purchase select,.merchant-purchase input { font-size:13px; min-height:38px; }
+.merchant-table td:nth-child(2) { color:#e1c18a; }
+.merchant-content > p { line-height:1.7; }
+.merchant-purchase-status { font-size:14px; }
+.session-toggle { min-height:38px; font-size:12px; white-space:nowrap; }
+.session-toggle[aria-pressed=true] { background:#c4a16b1c; border-color:#a48b58; color:#e3c79a; }
+.atlas-mobile-toggle,.atlas-close { display:none; }
+.campaign-header { grid-template-columns:190px minmax(0,1fr) auto; gap:12px; padding-left:20px; padding-right:20px; }
+.campaign-header-actions { gap:9px; }
+.campaign-header .module-button { padding-left:12px; padding-right:12px; }
+.app-shell,.app-shell.sidebar-collapsed,.app-shell:not(.sidebar-collapsed) { grid-template-rows:var(--ui-header-height) minmax(0,1fr); }
+/* Session mode never changes role or campaign contents. Editing is one click away. */
+.session-mode .combat-composer,.session-mode #initiativeSortBtn,.session-mode #initiativeResetBtn,.session-mode #initiativeClearBtn,
+.session-mode .resource-actor-form,.session-mode .resource-column-header [data-action=deleteResourceActor],
+.session-mode .backpack-item-actions,.session-mode .resource-add-button,
+.session-mode #merchantsModule > .module-header > button,.session-mode .merchant-actions,
+.session-mode .merchant-management,.session-mode .merchant-table th:last-child:not(:nth-child(4)),
+.session-mode [data-tool=edit],.session-mode [data-tab=campaign],
+.session-mode .sidebar [data-tab-panel=map] > .file-button,.session-mode .sidebar [data-tab-panel=map] > .input-row,.session-mode #saveMapNameBtn { display:none; }
+.session-mode #merchantsModule > .hint { display:none; }
+.session-mode .initiative-delete { visibility:hidden; pointer-events:none; }
+.session-mode .initiative-toolbar { border-color:#a48b5855; }
+.session-mode #combatComposerToggleBtn { display:inline-flex; }
+/* Keep transitions away from map geometry and dragging. */
+.module-button,.tab-button,.tool-button,.merchant-list button,button.secondary { transition:color var(--ui-motion),background-color var(--ui-motion),border-color var(--ui-motion),box-shadow var(--ui-motion); }
+.merchant-content { animation:ui-content-in 150ms ease-out; }
+.app-module:not([hidden]) > .module-header { animation:ui-content-in 150ms ease-out; }
+@keyframes ui-content-in { from { opacity:.65; } to { opacity:1; } }
+@media(max-width:1200px) and (min-width:901px) {
+  .campaign-header { grid-template-columns:120px minmax(0,1fr) auto; gap:8px; padding:0 14px; }
+  .campaign-brand small { display:none; }
+  .campaign-brand strong { font-size:18px; letter-spacing:.12em; }
+  .campaign-sigil { width:30px; height:36px; font-size:24px; }
+  .campaign-header .module-button { font-size:13px; padding:8px; gap:5px; }
+  .sidebar-toggle { max-width:72px; }
+  .session-toggle { max-width:100px; white-space:normal; }
+}
+@media(max-width:900px) {
+  :root { --ui-header-height:122px; }
+  .app-shell,.app-shell.sidebar-collapsed { grid-template-columns:0 minmax(0,1fr); }
+  .campaign-header { height:var(--ui-header-height); grid-template-columns:140px 1fr; grid-template-rows:40px 44px; gap:8px; padding:12px 16px; }
+  .campaign-header-actions { grid-row:1; grid-column:2; justify-self:end; }
+  .campaign-brand { grid-column:1; grid-row:1; }
+  .campaign-brand small { display:none; }
+  .module-actions { grid-row:2; grid-column:1 / -1; }
+  .campaign-header .module-button { min-height:44px; font-size:14px; padding:8px 16px; }
+  .module-button.active::after { bottom:-9px; }
+  #sidebarToggleBtn { display:none; }
+  .atlas-mobile-toggle { display:inline-flex; align-items:center; min-height:40px; font-size:13px; padding:7px 12px; white-space:nowrap; }
+  .app-shell:has(.module-button.active:not([data-module=map])) .atlas-mobile-toggle { display:none; }
+  .sidebar,.app-shell.sidebar-collapsed .sidebar { position:fixed; top:var(--ui-header-height); bottom:0; left:0; right:auto; width:320px; max-width:84vw; max-height:none; padding:20px; opacity:1; background:#1a2022; border-right:1px solid #b49a6566; border-bottom:0; z-index:30; overflow:auto; transform:translateX(-105%); visibility:hidden; pointer-events:none; transition:transform 180ms ease,visibility 180ms; box-shadow:18px 0 35px #0006; }
+  .app-shell.atlas-mobile-open .sidebar,.app-shell.atlas-mobile-open.sidebar-collapsed .sidebar { width:320px; padding:20px; transform:translateX(0); opacity:1; visibility:visible; pointer-events:auto; border-right-color:#b49a6566; }
+  .sidebar .brand { position:sticky; top:-20px; z-index:3; padding:16px 0; margin:0 0 12px; background:#1a2022; border-bottom:1px solid #74613e55; }
+  .sidebar .brand h1 { font-size:18px; }
+  .sidebar .brand-mark { display:none; }
+  .sidebar .brand p { display:none; }
+  .atlas-close { display:inline-flex; align-items:center; margin-left:auto; min-height:44px; font-size:13px; padding:7px 11px; }
+  .details-panel { top:calc(var(--ui-header-height) + 12px); }
+  .map-controls { gap:12px; }
+  .map-controls .top-tools { gap:4px; }
+  .top-tools .tool-button { font-size:13px; padding:8px 12px; }
+  .map-context-heading #toolStatus { font-size:12px; }
+  .resource-column.equipment-open { flex-basis:100%; }
+  .equipment-feed { grid-template-columns:minmax(0,1fr) 150px minmax(0,1fr); }
+  .merchant-layout { gap:18px; }
+}
+/* Cards reuse the same cells and event handlers as the desktop management table. */
+@media(max-width:800px) {
+  .merchant-table-wrap { overflow:visible; }
+  .merchant-table,.merchant-table tbody { display:block; width:100%; }
+  .merchant-table thead { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+  .merchant-table tbody { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+  .merchant-table tr { display:flex; flex-direction:column; min-width:0; padding:16px; border:1px solid #8c704e66; border-radius:10px; background:#151c1e; box-shadow:0 4px 14px #0002; }
+  .merchant-table td,.merchant-table td:first-child,.merchant-table td:nth-child(2),.merchant-table td:nth-child(3),.merchant-table td:last-child { display:block; min-width:0; max-width:none; padding:7px 0; border:0; white-space:normal; overflow-wrap:anywhere; }
+  .merchant-table td::before { content:attr(data-label); display:block; font:600 12px 'Segoe UI',sans-serif; color:#bab09a; margin-bottom:5px; }
+  .merchant-table td:first-child { font-size:21px; line-height:1.4; color:#eee1c6; padding-top:0; }
+  .merchant-table td:first-child::before { display:none; }
+  .merchant-table td:nth-child(2) { font-size:18px; }
+  .merchant-table td:nth-child(3) { font-size:14px; line-height:1.65; flex:1; }
+  .merchant-table .merchant-purchase { padding-top:14px; margin-top:6px; border-top:1px solid #685a3c77; }
+  .merchant-purchase select,.merchant-purchase input { min-height:44px; font-size:14px; }
+  .merchant-table td button { min-height:42px; font-size:13px; padding:9px 12px; }
+  .merchant-management { display:flex!important; gap:8px; flex-wrap:wrap; }
+  .merchant-management::before { flex-basis:100%; }
+  .session-mode .merchant-management { display:none!important; }
+  .merchant-content { padding:18px; }
+}
+@media(max-width:650px) {
+  :root { --ui-header-height:164px; }
+  .campaign-header { height:var(--ui-header-height); padding:8px 12px; grid-template-columns:minmax(0,1fr) auto; grid-template-rows:44px 44px 44px; gap:8px; }
+  .campaign-header-actions { display:contents; }
+  .campaign-brand { grid-row:1; grid-column:1; gap:8px; }
+  .campaign-brand strong { font-size:19px; letter-spacing:.12em; }
+  .campaign-sigil { width:27px; height:33px; }
+  .top-role { grid-row:1; grid-column:2; }
+  .segmented button { min-height:38px; font-size:13px; padding:6px 9px; }
+  .module-actions { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); grid-row:2; grid-column:1 / -1; width:100%; gap:3px; }
+  .campaign-header .module-button { min-height:44px; font-size:12px; padding:7px 3px; gap:4px; justify-content:center; }
+  .module-button::before { width:14px; height:14px; }
+  .campaign-header .module-button::before { display:none; }
+  .module-button.active::after { bottom:-4px; }
+  .session-toggle { grid-row:3; grid-column:1; justify-self:start; font-size:13px; min-height:42px; padding:8px 12px; }
+  .atlas-mobile-toggle { grid-row:3; grid-column:2; justify-self:end; font-size:13px; min-height:42px; padding:8px 12px; }
+  .sidebar,.app-shell.sidebar-collapsed .sidebar,.app-shell.atlas-mobile-open .sidebar,.app-shell.atlas-mobile-open.sidebar-collapsed .sidebar { top:auto; bottom:0; left:0; right:0; width:100%; max-width:none; max-height:42dvh; padding:0 18px 18px; border:1px solid #aa8a5966; border-radius:16px 16px 0 0; box-shadow:0 -12px 34px #0006; }
+  .sidebar,.app-shell.sidebar-collapsed .sidebar { transform:translateY(105%); }
+  .app-shell.atlas-mobile-open .sidebar,.app-shell.atlas-mobile-open.sidebar-collapsed .sidebar { transform:translateY(0); }
+  .sidebar .brand { top:0; padding:14px 0; margin:0; }
+  .sidebar .brand h1 { font-size:18px; }
+  .header-tabs.atlas-tabs { grid-template-columns:repeat(4,minmax(0,1fr)); margin:12px 0; }
+  .header-tabs.atlas-tabs .tab-button { font-size:12px; min-height:42px; padding:6px 3px; }
+  .statusbar { padding:12px 12px 28px; gap:10px; }
+  .map-controls { width:100%; gap:6px; justify-content:space-between; flex-wrap:nowrap; }
+  .top-tools { flex:1; gap:1px!important; padding:3px; }
+  .top-tools .tool-button { min-height:42px; font-size:12px; padding:7px; justify-content:center; }
+  .top-tools .tool-button::before { display:none; }
+  .zoom-controls { padding:3px; }
+  .zoom-controls button { min-height:42px; width:32px; }
+  .map-context-heading .badge { font-size:12px; }
+  #saveStatus { font-size:12px; right:14px; }
+  .details-panel { width:calc(100vw - 24px); right:12px; max-height:calc(100dvh - var(--ui-header-height) - 24px); }
+  .initiative-toolbar { gap:8px; padding:10px; top:0; }
+  .initiative-toolbar button { min-height:42px; padding:8px 12px; }
+  #initiativeNextBtn { flex:1 1 100%; min-height:48px; margin:0; font-size:16px; order:-2; }
+  #combatComposerToggleBtn { flex:1 1 auto; }
+  .initiative-row.active::before { left:15px; font-size:12px; }
+  .initiative-main strong { font-size:22px; }
+  .initiative-stats { margin-left:0; }
+  .initiative-stat-input span { font-size:12px; }
+  .initiative-stat-input input { min-height:44px; }
+  .resource-inventory-label { font-size:13px; flex-wrap:wrap; gap:6px; }
+  .resource-inventory-label::after { font-size:12px; }
+  .resource-panel h4 { font-size:12px; }
+  .backpack-item-actions button { min-height:44px; font-size:13px; }
+  .resource-add-button { min-height:44px; width:44px; height:44px; }
+  [data-resource-panel-type=backpack] .resource-add-button { min-height:44px; width:auto; }
+  .details-header .icon-button { min-height:44px; width:44px; }
+  .equipment-feed { grid-template-columns:repeat(2,minmax(0,1fr)); grid-template-areas:'title title' 'figure figure' 'head neck' 'cloak armor' 'bracers hands' 'feet focus' 'ring1 ring2' 'mainHand offHand'; padding:12px; gap:12px; }
+  .equipment-figure { min-height:190px; max-height:230px; }
+  .equipment-portrait { max-height:215px; width:auto; max-width:100%; }
+  .equipment-slot { min-height:110px; padding:10px; }
+  .equipment-slot span,.equipment-slot small { font-size:12px; }
+  .equipment-slot input { font-size:14px; min-height:40px; padding:6px; }
+  .merchant-table tbody { grid-template-columns:1fr; }
+  .merchant-content { padding:14px; }
+  .merchant-list button { flex-basis:190px; font-size:14px; }
+  .merchant-actions button { font-size:13px; min-height:42px; }
+  .merchant-table td:nth-child(3) { max-width:none; }
+  .merchant-purchase select,.merchant-purchase input { font-size:16px; }
+  .merchant-dialog input,.merchant-dialog textarea,.merchant-dialog select,.resource-dialog input { font-size:16px; }
+}
+@media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none!important; transition:none!important; scroll-behavior:auto!important; } }
+.resource-name-heading { min-width:0; display:grid; gap:7px; }
+.resource-name-heading h3 { overflow-wrap:anywhere; }
+.resource-rename-button { justify-self:start; max-width:100%; min-height:36px; padding:5px 9px; font-size:13px; }
+.session-mode .resource-rename-button { display:none; }
+@media(max-width:650px) { .resource-rename-button { min-height:44px; } }

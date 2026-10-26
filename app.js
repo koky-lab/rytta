@@ -65,6 +65,7 @@ const layerRules = {
 const state = {
   role: "dm",
   activeModule: "map",
+  merchants: structuredClone(DEFAULT_MERCHANTS),
   selectedPointId: null,
   currentMapId: "main",
   mapHistory: [],
@@ -279,6 +280,7 @@ function getCampaignData() {
     sidebarCollapsed: state.sidebarCollapsed,
     initiative: state.initiative,
     resources: state.resources,
+    merchants: state.merchants,
     scale: Number(els.scaleInput.value),
     kmPerPixel: Number(els.kmPerPixelInput.value),
     speed: Number(els.speedInput.value),
@@ -287,6 +289,7 @@ function getCampaignData() {
 
 function applyCampaignData(saved) {
   if (!saved) return;
+  state.merchants = normalizeMerchants(saved.merchants);
   state.role = saved.role || "dm";
   state.activeModule = "map";
   state.currentMapId = saved.currentMapId || "main";
@@ -318,7 +321,7 @@ function applyCampaignData(saved) {
         .map(normalizeResourceActor)
       : [],
     entries: Array.isArray(saved.resources?.entries)
-      ? saved.resources.entries.filter((entry) => entry.actorId !== "party")
+      ? saved.resources.entries.filter((entry) => entry.actorId !== "party").map(normalizeBackpackEntry)
       : [],
   };
   els.scaleInput.value = saved.scale || 1;
@@ -371,11 +374,17 @@ function undoLastChange() {
 
 async function saveState() {
   const data = getCampaignData();
+  if (window.RYTTA_SHARED) {
+    if (window.ryttaOnline) return window.ryttaOnline.onSave(data);
+    updateSaveStatus("Conectando con la campaña compartida…");
+    return;
+  }
+  window.ryttaOnline?.onSave(data);
   updateSaveStatus("Guardando...");
   saveChain = saveChain.then(async () => {
     try {
       await dbSet(CAMPAIGN_KEY, data);
-      updateSaveStatus("Guardado");
+      updateSaveStatus("Guardado en este navegador");
     } catch (error) {
       console.warn("No se pudo guardar en la base de datos local", error);
       try {
@@ -396,6 +405,7 @@ function updateSaveStatus(text) {
 }
 
 async function loadSetups() {
+  if (window.RYTTA_SHARED) { renderSetupOptions(); return; }
   try {
     const stored = await dbGet(SETUPS_DB_KEY);
     if (stored) {
@@ -415,6 +425,8 @@ async function loadSetups() {
 }
 
 async function saveSetups() {
+  window.ryttaOnline?.onSave(getCampaignData());
+  if (window.RYTTA_SHARED) { renderSetupOptions(); return; }
   try {
     await dbSet(SETUPS_DB_KEY, state.setups);
   } catch (error) {
@@ -471,6 +483,7 @@ function applySetup(setup) {
 }
 
 async function loadState() {
+  if (window.RYTTA_SHARED) return;
   try {
     const saved = await dbGet(CAMPAIGN_KEY);
     if (saved) {
@@ -511,8 +524,10 @@ function setActiveTab(tab) {
 }
 
 function setActiveModule(module, options = {}) {
-  const allowedModules = ["map", "initiative", "resources"];
+  const allowedModules = ["map", "initiative", "resources", "merchants"];
   state.activeModule = allowedModules.includes(module) ? module : "map";
+  document.querySelector("#merchantsModule").hidden = state.activeModule !== "merchants";
+  if (state.activeModule === "merchants") renderMerchants();
   const isMap = state.activeModule === "map";
   els.viewport.hidden = !isMap;
   els.mapControls.hidden = !isMap;
@@ -642,6 +657,8 @@ function setRole(role, options = {}) {
   els.dmModeBtn.classList.toggle("active", role === "dm");
   els.playerModeBtn.classList.toggle("active", role === "player");
   els.roleBadge.textContent = role === "dm" ? "Modo DM" : "Modo jugadores";
+  renderMerchants();
+  renderResources();
   renderPoints();
   renderDetails();
   if (!options.skipSave) saveState();
@@ -956,7 +973,8 @@ function renderResources() {
     const waterTotals = getResourceTotals(
       actorEntries.filter((entry) => entry.type === "water").map((entry) => ({ ...entry, name: "Agua" })),
     );
-    const inventoryTotals = getResourceTotals(actorEntries.filter((entry) => entry.type !== "coin" && entry.type !== "water"));
+    const inventoryTotals = getResourceTotals(actorEntries.filter((entry) => entry.type !== "coin" && entry.type !== "water" && entry.type !== "backpack"));
+    const backpackTotals = getResourceTotals(actorEntries.filter((entry) => entry.type === "backpack"));
     const column = document.createElement("section");
     column.className = "resource-column";
     column.classList.toggle("equipment-open", actor.inventoryOpen === true);
@@ -970,13 +988,25 @@ function renderResources() {
     avatar.textContent = actor.name.trim().charAt(0).toUpperCase() || "?";
     const title = document.createElement("h3");
     title.textContent = actor.name;
+    const nameHeading = document.createElement("div");
+    nameHeading.className = "resource-name-heading";
+    nameHeading.append(title);
+    if (state.role === "dm") {
+      const rename = document.createElement("button");
+      rename.type = "button";
+      rename.className = "secondary resource-rename-button";
+      rename.textContent = "Editar nombre";
+      rename.setAttribute("aria-label", `Editar nombre de ${actor.name}`);
+      rename.dataset.action = "renameResourceActor";
+      nameHeading.append(rename);
+    }
     const removeActor = document.createElement("button");
     removeActor.className = "secondary icon-button";
     removeActor.type = "button";
     removeActor.title = "Borrar PJ";
     removeActor.dataset.action = "deleteResourceActor";
     removeActor.textContent = "x";
-    header.append(avatar, title, removeActor);
+    header.append(avatar, nameHeading, removeActor);
 
     const exhaustion = createExhaustionMeter(actor);
 
@@ -992,6 +1022,7 @@ function renderResources() {
       createResourcePanel("Recursos", inventoryTotals, "Sin recursos", actor.id, "resource"),
       createResourcePanel("Monedas", coinTotals, "Sin monedas", actor.id, "coin"),
       createResourcePanel("Agua", waterTotals, "Sin agua", actor.id, "water"),
+      createResourcePanel("Mochila", backpackTotals, "La mochila está vacía. Las compras aparecerán aquí.", actor.id, "backpack"),
     );
 
     if (actor.inventoryOpen) {
@@ -1003,13 +1034,57 @@ function renderResources() {
   });
 }
 
+function renameResourceActor(actorId, value) {
+  if (state.role !== "dm" || typeof value !== "string") return false;
+  const name = value.trim();
+  const actor = state.resources.actors.find((candidate) => candidate.id === actorId);
+  if (!actor || !name || name.length > 100) return false;
+  if (actor.name === name) return true;
+  rememberUndo();
+  // Accounts and possessions remain linked to the unchanged actor ID.
+  actor.name = name;
+  renderResources();
+  saveState();
+  return true;
+}
+
+function openResourceActorNameEditor(actorId) {
+  if (state.role !== "dm") return;
+  const actor = state.resources.actors.find((candidate) => candidate.id === actorId);
+  if (!actor) return;
+  const dialog = merchantNode("dialog", undefined, "merchant-dialog");
+  const form = merchantNode("form");
+  const heading = merchantNode("h2", "Editar nombre del personaje");
+  heading.id = "resourceActorNameEditorTitle";
+  dialog.setAttribute("aria-labelledby", heading.id);
+  const label = merchantNode("label", undefined, "input-row");
+  label.append(merchantNode("span", "Nombre del personaje"));
+  const input = merchantNode("input");
+  input.type = "text"; input.required = true; input.maxLength = 100; input.value = actor.name;
+  input.oninput = () => input.setCustomValidity("");
+  label.append(input);
+  const actions = merchantNode("div", undefined, "merchant-actions");
+  actions.append(merchantButton("Cancelar", () => dialog.close()));
+  const save = merchantNode("button", "Guardar nombre");
+  save.type = "submit"; actions.append(save);
+  form.append(heading, label, actions);
+  form.onsubmit = (event) => {
+    event.preventDefault();
+    if (!input.value.trim()) { input.setCustomValidity("Escribe un nombre para el personaje."); input.reportValidity(); return; }
+    if (renameResourceActor(actorId, input.value)) dialog.close();
+  };
+  dialog.append(form); document.body.append(dialog);
+  dialog.addEventListener("close", () => dialog.remove());
+  dialog.showModal(); input.focus(); input.select();
+}
+
 function getResourceTotals(entries) {
   const totals = new Map();
   entries.forEach((entry) => {
     const key = entry.name.trim().toLowerCase();
     if (!key) return;
     const existing = totals.get(key) || { name: entry.name, quantity: 0, type: entry.type };
-    existing.quantity += Number(entry.quantity) || 0;
+    existing.quantity = entry.type === "coin" ? (Math.round(existing.quantity * 100) + Math.round((Number(entry.quantity) || 0) * 100)) / 100 : existing.quantity + (Number(entry.quantity) || 0);
     totals.set(key, existing);
   });
   return Array.from(totals.values())
@@ -1122,7 +1197,7 @@ function createEquipmentFeed(actor) {
 function createResourcePanel(title, items, emptyText, actorId, type) {
   const panel = document.createElement("section");
   panel.className = "resource-panel";
-  if (type === "water") panel.classList.add("wide");
+  if (type === "water" || type === "backpack") panel.classList.add("wide");
   panel.dataset.resourcePanelType = type;
   const heading = document.createElement("h4");
   const headingText = document.createElement("span");
@@ -1130,18 +1205,25 @@ function createResourcePanel(title, items, emptyText, actorId, type) {
   const addButton = document.createElement("button");
   addButton.className = "resource-add-button";
   addButton.type = "button";
-  addButton.title = `Anadir ${type === "coin" ? "monedas" : type === "water" ? "agua" : "recurso"}`;
+  addButton.title = `Anadir ${type === "coin" ? "monedas" : type === "water" ? "agua" : type === "backpack" ? "objeto a la mochila" : "recurso"}`;
   addButton.dataset.action = "openResourceDialog";
   addButton.dataset.actorId = actorId;
   addButton.dataset.resourceType = type;
   addButton.textContent = "+";
+  if (type === "backpack") {
+    addButton.textContent = "+ Añadir";
+    delete addButton.dataset.action;
+    addButton.onclick = () => openBackpackEditor(actorId);
+  }
   heading.append(headingText, addButton);
   const body = document.createElement("div");
   body.className = "resource-panel-body";
+  if (type === "backpack") body.setAttribute("role", "list");
   if (!items.length) {
     body.textContent = emptyText;
   } else {
     items.forEach((item) => {
+      if (type === "backpack") { body.appendChild(createBackpackRow(actorId, item)); return; }
       const row = document.createElement("span");
       row.textContent = `${item.name}: ${item.quantity}`;
       body.appendChild(row);
@@ -1155,18 +1237,21 @@ function openResourceDialog(actorId, type) {
   const actor = state.resources.actors.find((candidate) => candidate.id === actorId);
   if (!actor) return;
   state.resourceDialog.actorId = actorId;
-  state.resourceDialog.type = ["coin", "water"].includes(type) ? type : "resource";
+  state.resourceDialog.type = ["coin", "water", "backpack"].includes(type) ? type : "resource";
   const isCoin = state.resourceDialog.type === "coin";
   const isWater = state.resourceDialog.type === "water";
+  const isBackpack = state.resourceDialog.type === "backpack";
   els.resourceDialogBadge.textContent = actor.name;
-  els.resourceDialogTitle.textContent = isCoin ? "Editar oro" : isWater ? "Editar agua" : "Editar raciones";
-  els.resourceDialogNameLabel.hidden = true;
-  els.resourceDialogNameInput.value = isCoin ? "Oro" : isWater ? "Agua" : "Raciones";
+  els.resourceDialogTitle.textContent = isCoin ? "Editar oro" : isWater ? "Editar agua" : isBackpack ? "Editar mochila" : "Editar raciones";
+  els.resourceDialogNameLabel.hidden = !isBackpack;
+  els.resourceDialogNameInput.value = isCoin ? "Oro" : isWater ? "Agua" : isBackpack ? "" : "Raciones";
   els.resourceDialogQuantityInput.value = "";
   els.resourceDialogNoteInput.value = "";
   els.resourceDialogQuantityInput.placeholder = isCoin || isWater ? "10 o -1" : "10";
   els.resourceDialogQuantityHint.textContent = isCoin
     ? "Usa numeros positivos para sumar oro y negativos para restar."
+    : isBackpack
+      ? "Escribe el objeto. Usa cantidades positivas para añadir y negativas para retirar."
     : isWater
       ? "Usa numeros positivos para anadir agua y negativos para consumirla."
       : "Usa numeros positivos para anadir raciones y negativos para consumirlas.";
@@ -1730,6 +1815,8 @@ function zoomBy(factor) {
 }
 
 function exportCampaign() {
+  if (window.RYTTA_SHARED) { window.ryttaOnline?.exportCampaign(); return; }
+  if (window.ryttaOnline?.exportCampaign()) return;
   const data = JSON.stringify({
     ...getCampaignData(),
     setups: state.setups,
@@ -2115,6 +2202,10 @@ els.resourceFeed.addEventListener("click", (event) => {
   const column = event.target.closest("[data-actor-id]");
   const action = event.target.closest("[data-action]")?.dataset.action;
   if (!action) return;
+  if (action === "renameResourceActor" && column) {
+    openResourceActorNameEditor(column.dataset.actorId);
+    return;
+  }
   if (action === "openResourceDialog") {
     const button = event.target.closest("[data-action]");
     openResourceDialog(button.dataset.actorId, button.dataset.resourceType);
@@ -2244,7 +2335,7 @@ els.resourceDialogForm.addEventListener("submit", (event) => {
   event.preventDefault();
   const actorId = state.resourceDialog.actorId;
   const type = state.resourceDialog.type;
-  const name = type === "coin" ? "Oro" : type === "water" ? "Agua" : "Raciones";
+  const name = type === "coin" ? "Oro" : type === "water" ? "Agua" : type === "backpack" ? els.resourceDialogNameInput.value.trim() : "Raciones";
   const quantity = Number(els.resourceDialogQuantityInput.value);
   if (!actorId || !name || !Number.isFinite(quantity) || quantity === 0) return;
   rememberUndo();
@@ -2410,4 +2501,4 @@ async function initApp() {
   applyMapImage({ skipSave: true });
 }
 
-initApp();
+window.ryttaAppReady = initApp();
